@@ -937,7 +937,7 @@ export default function ClienteDetallePage() {
               background: !tabsLocked && dragOverIdx === i ? `${themeColor}12` : 'transparent',
               cursor: tabsLocked ? 'pointer' : 'grab',
               fontSize: 13, fontFamily: 'inherit', fontWeight: tab === t ? 600 : 400,
-              color: tab === t ? themeColor : (panelSkin === 'dark' ? '#94a3b8' : '#64748b'),
+              color: tab === t ? themeColor : (PANEL_SKINS[panelSkin].dark ? '#94a3b8' : '#64748b'),
               borderBottom: `2px solid ${tab === t ? themeColor : 'transparent'}`,
               transition: 'all 0.15s', whiteSpace: 'nowrap',
               opacity: !tabsLocked && dragIdx === i ? 0.4 : 1,
