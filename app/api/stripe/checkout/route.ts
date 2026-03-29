@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
+const getStripe = () => new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-03-25.dahlia' })
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 // IDs de precios en Stripe — se crean la primera vez y se reutilizan
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     // Crear o recuperar customer de Stripe
     let stripeCustomerId = client.stripe_customer_id
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: client.email || '',
         name: client.name,
         metadata: { client_id: clientId },
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       sessionConfig.line_items = [{ price: priceId, quantity: 1 }]
     }
 
-    const session = await stripe.checkout.sessions.create(sessionConfig)
+    const session = await getStripe().checkout.sessions.create(sessionConfig)
     return NextResponse.json({ url: session.url })
 
   } catch (error: any) {
