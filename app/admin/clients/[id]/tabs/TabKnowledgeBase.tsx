@@ -1,5 +1,5 @@
 // app/admin/clients/[id]/tabs/TabKnowledgeBase.tsx
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { S } from '@/lib/admin-styles'
 
 interface Props {
@@ -29,6 +29,7 @@ export default function TabKnowledgeBase(props: Props) {
     uploadingFile, uploadKBFile, eliminarSource, isDragOver, handleDragEnter, handleDragLeave,
     handleDragOver, handleDrop, lanzarScraping, guardar, saving, saved, themeColor, id, cargar, cargarSources } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [savingKB, setSavingKB] = useState(false)
   const fileTypes = [
     { ext: '.pdf', icon: '📄', label: 'PDF' },
     { ext: '.docx,.doc', icon: '📝', label: 'Word' },
@@ -70,8 +71,8 @@ export default function TabKnowledgeBase(props: Props) {
                     style={{ ...S.inp, fontFamily: 'monospace', resize: 'vertical', lineHeight: 1.6, fontSize: 12 }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                     <span style={{ fontSize: 11, color: '#aaa' }}>{textoKB.split(/\s+/).filter(Boolean).length} palabras</span>
-                    <button onClick={async () => { setSaving(s => ({ ...s, kb: true })); await fetch('/api/knowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId: id, contentMd: textoKB }) }); setSaving(s => ({ ...s, kb: false })); setMostrarEditorKB(false); cargar() }} style={S.btn(themeColor)}>
-                      {saving.kb ? 'Guardando...' : 'Guardar KB'}
+                    <button onClick={async () => { setSavingKB(true); await fetch('/api/knowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId: id, contentMd: textoKB }) }); setSavingKB(false); setMostrarEditorKB(false); cargar() }} style={S.btn(themeColor)}>
+                      {savingKB ? 'Guardando...' : 'Guardar KB'}
                     </button>
                   </div>
                 </div>
