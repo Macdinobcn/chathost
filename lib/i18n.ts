@@ -559,7 +559,7 @@ export type TranslationKey = keyof typeof translations.es
 export function useT(lang: Idioma = 'es') {
   const t = translations[lang] ?? translations.es
   // Función para reemplazar variables como {n}
-  return function tr(key: TranslationKey, vars?: Record<string, string | number>): string {
+  return function tr(key: TranslationKey | string, vars?: Record<string, string | number>): string {
     let str = (t as any)[key] ?? (translations.es as any)[key] ?? key
     if (vars) {
       Object.entries(vars).forEach(([k, v]) => {
