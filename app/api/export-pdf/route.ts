@@ -391,7 +391,7 @@ export async function POST(req: NextRequest) {
     const nombreCliente = (data.clienteName || 'chat').toLowerCase().replace(/\s+/g, '-')
     const filename = `chatlogs-${nombreCliente}-${fecha}.pdf`
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
