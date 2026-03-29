@@ -32,7 +32,8 @@ export default function LandingPage() {
         .btn-ghost-dark:hover { color: white; border-color: var(--border); }
         .btn-grad { text-decoration: none; background: var(--grad); color: white; font-size: 14px; font-weight: 600; padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.2s, transform 0.15s; box-shadow: 0 0 24px rgba(99,102,241,0.35); }
         .btn-grad:hover { opacity: 0.9; transform: translateY(-1px); }
-        .hero { padding: 100px 48px 80px; max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        .hero { padding: 80px 48px 40px; max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: flex-start; }
+        .hero-below { max-width: 1100px; margin: 0 auto; padding: 0 48px 80px; }
         .hero-pill { display: inline-flex; align-items: center; gap: 8px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); color: #a78bfa; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; margin-bottom: 28px; letter-spacing: 0.05em; text-transform: uppercase; animation: fadeUp 0.5s ease both; }
         .hero-pill span { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; display: inline-block; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
@@ -172,48 +173,6 @@ export default function LandingPage() {
               <Link href="/auth/register" className="btn-large-grad">Crear mi chatbot gratis →</Link>
               <a href="#como-funciona" className="btn-large-outline">Ver demo ↓</a>
             </div>
-
-            {/* Trial pack */}
-            <div style={{ marginTop: 28, background: 'linear-gradient(135deg,rgba(59,130,246,0.1),rgba(99,102,241,0.15))', border: '1px solid rgba(99,102,241,0.35)', borderRadius: 20, padding: '24px 28px', maxWidth: 460 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
-                <div style={{ background: 'linear-gradient(135deg,#3b82f6,#6366f1)', borderRadius: 14, padding: '12px 18px', textAlign: 'center', flexShrink: 0, boxShadow: '0 0 30px rgba(99,102,241,0.4)' }}>
-                  <div style={{ fontSize: 36, fontWeight: 900, color: 'white', lineHeight: 1, letterSpacing: '-0.02em' }}>0€</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 700, letterSpacing: '0.08em', marginTop: 2 }}>GRATIS</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: 6 }}>15 días de prueba</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    <div style={{ fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#6366f1', fontWeight: 700 }}>✓</span> 100 mensajes incluidos</div>
-                    <div style={{ fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#6366f1', fontWeight: 700 }}>✓</span> Sin tarjeta de crédito</div>
-                    <div style={{ fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#6366f1', fontWeight: 700 }}>✓</span> Cancela cuando quieras</div>
-                  </div>
-                </div>
-              </div>
-              <Link href="/auth/register" style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg,#3b82f6,#6366f1)', color: 'white', fontSize: 15, fontWeight: 700, padding: 14, borderRadius: 12, textDecoration: 'none', boxShadow: '0 0 30px rgba(99,102,241,0.4)' }}>
-                Empezar gratis ahora →
-              </Link>
-            </div>
-
-            {/* Clientes reales */}
-            <div style={{ marginTop: 28 }}>
-              <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>Ya confían en ChatHost.ai</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                <a href="https://astun.com" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 14px', textDecoration: 'none' }}>
-                  <span style={{ fontSize: 18 }}>⛷️</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Astún</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>astun.com</div>
-                  </div>
-                </a>
-                <a href="https://candanchu.com" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 14px', textDecoration: 'none' }}>
-                  <span style={{ fontSize: 18 }}>🏔️</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Candanchú</div>
-                    <div style={{ fontSize: 10, color: '#64748b' }}>candanchu.com</div>
-                  </div>
-                </a>
-              </div>
-            </div>
           </div>
 
           <div className="widget-wrap">
@@ -248,6 +207,51 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* HERO BELOW — trial box + clientes */}
+      <div className="hero-below">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'center' }}>
+          {/* Trial box */}
+          <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.1),rgba(99,102,241,0.15))', border: '1px solid rgba(99,102,241,0.35)', borderRadius: 20, padding: '24px 28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+              <div style={{ background: 'linear-gradient(135deg,#3b82f6,#6366f1)', borderRadius: 14, padding: '12px 18px', textAlign: 'center', flexShrink: 0, boxShadow: '0 0 30px rgba(99,102,241,0.4)' }}>
+                <div style={{ fontSize: 36, fontWeight: 900, color: 'white', lineHeight: 1, letterSpacing: '-0.02em' }}>0€</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: 700, letterSpacing: '0.08em', marginTop: 2 }}>GRATIS</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: 6 }}>15 días de prueba</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <div style={{ fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#6366f1', fontWeight: 700 }}>✓</span> 100 mensajes incluidos</div>
+                  <div style={{ fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#6366f1', fontWeight: 700 }}>✓</span> Sin tarjeta de crédito</div>
+                  <div style={{ fontSize: 13, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ color: '#6366f1', fontWeight: 700 }}>✓</span> Cancela cuando quieras</div>
+                </div>
+              </div>
+            </div>
+            <Link href="/auth/register" style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg,#3b82f6,#6366f1)', color: 'white', fontSize: 15, fontWeight: 700, padding: 14, borderRadius: 12, textDecoration: 'none', boxShadow: '0 0 30px rgba(99,102,241,0.4)' }}>
+              Empezar gratis ahora →
+            </Link>
+          </div>
+
+          {/* Clientes reales */}
+          <div>
+            <div style={{ fontSize: 11, color: '#475569', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Ya confían en ChatHost.ai</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+              <a href="https://astun.com" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 14px', textDecoration: 'none' }}>
+                <span style={{ fontSize: 18 }}>⛷️</span>
+                <div><div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Astún</div><div style={{ fontSize: 10, color: '#64748b' }}>astun.com</div></div>
+              </a>
+              <a href="https://candanchu.com" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 14px', textDecoration: 'none' }}>
+                <span style={{ fontSize: 18 }}>🏔️</span>
+                <div><div style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>Candanchú</div><div style={{ fontSize: 10, color: '#64748b' }}>candanchu.com</div></div>
+              </a>
+            </div>
+            <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7 }}>
+              Más de <strong style={{ color: '#94a3b8' }}>7.400 conversaciones</strong> atendidas el primer año.<br />
+              Respuestas en 4 idiomas, las 24h, sin intervención humana.
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* CLIENTS STRIP */}
       <div className="clients-strip">
@@ -495,9 +499,9 @@ export default function LandingPage() {
             <div className="footer-col">
               <h4>Legal</h4>
               <Link href="/privacy">Privacidad</Link>
-              <a href="#">Términos</a>
-              <a href="#">Cookies</a>
-              <a href="#">GDPR</a>
+              <a href="mailto:hola@chathost.ai">Términos</a>
+              <a href="mailto:hola@chathost.ai">Cookies</a>
+              <a href="mailto:hola@chathost.ai">GDPR</a>
             </div>
           </div>
           <div className="footer-bottom">
