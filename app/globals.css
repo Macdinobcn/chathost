@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #eff6ff;
+  --color-primary-border: #bfdbfe;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input, textarea, select {
+  color: #1e293b !important;
+  background-color: white !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Sliders — heredan el color del tema vía JS (accentColor inline) */
+input[type="range"] {
+  accent-color: var(--color-primary);
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Animación del panel de tema */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.theme-panel-enter {
+  animation: slideDown 0.15s ease;
+}
+
+/* Drag & drop highlight */
+@keyframes dragPulse {
+  0%, 100% { border-color: var(--color-primary); }
+  50%       { border-color: #93c5fd; }
+}
+.drag-active {
+  animation: dragPulse 1s ease-in-out infinite;
+}
