@@ -86,7 +86,7 @@ export default function TabActivity(props: Props) {
 
                 {/* Filtro de score — botón que despliega panel inline */}
                 <div>
-                  <button onClick={() => setScorePanel(p => !p)}
+                  <button onClick={() => setScorePanel((p: boolean) => !p)}
                     style={{
                       width: '100%', padding: '7px 12px', borderRadius: 7, fontSize: 11, fontWeight: 600,
                       border: '1.5px solid ' + (filtroScoreMax < 10 ? themeColor : '#e5e7eb'),
