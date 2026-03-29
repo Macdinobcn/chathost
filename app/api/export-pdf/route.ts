@@ -19,9 +19,9 @@ async function getBrowser() {
     
     return puppeteer.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: { width: 1280, height: 800 },
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless as boolean,
+      headless: true,
     });
   } else {
     // En local: puppeteer normal (con Chromium incluido)
@@ -35,7 +35,7 @@ function renderMarkdown(text: string): string {
   return text
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:#2563eb">$1</a>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/gs, (match) => `<ul style="margin:4px 0;padding-left:20px">${match}</ul>`)
+    .replace(/(<li>.*<\/li>\n?)+/gm, (match) => `<ul style="margin:4px 0;padding-left:20px">${match}</ul>`)
     .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
     .replace(/\n\n/g, '</p><p>')
     .replace(/\n/g, '<br>');
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       const pdf = await page.pdf({ format: 'A4', margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } });
       await browser.close();
 
-      return new NextResponse(pdf, {
+      return new NextResponse(Buffer.from(pdf), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="conversacion-${conversationId.slice(0, 8)}.pdf"`,
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
 
     const filename = `conversaciones-${clientName.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`;
 
-    return new NextResponse(pdf, {
+    return new NextResponse(Buffer.from(pdf), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,
