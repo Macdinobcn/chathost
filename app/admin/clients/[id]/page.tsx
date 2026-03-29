@@ -1696,7 +1696,7 @@ export default function ClienteDetallePage() {
                                     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
                                     .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color:' + themeColor + ';text-decoration:underline;word-break:break-all">$1</a>')
                                     .replace(/^- (.+)$/gm, '<li style="margin-left:16px;margin-bottom:2px">$1</li>')
-                                    .replace(/(<li[^>]*>.*<\/li>\s*)+/gs, '<ul style="padding:0;margin:6px 0;list-style:none">$&</ul>')
+                                    .replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul style="padding:0;margin:6px 0;list-style:none">$&</ul>')
                                     .replace(/\n\n/g, '<br><br>')
                                     .replace(/\n/g, '<br>')
                                 : (msg.content || '').replace(/\n/g, '<br>')
