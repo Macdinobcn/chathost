@@ -333,27 +333,27 @@ export default function LandingClient() {
         .feature-dark p { font-size: 13px; color: var(--text2); line-height: 1.7; }
         .pricing-wrap { background: var(--dark2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 80px 48px; }
         .pricing-inner { max-width: 1100px; margin: 0 auto; }
-        .plan-dark { background: var(--dark3); border: 1px solid var(--border); border-radius: 16px; padding: 28px 22px; position: relative; transition: border-color 0.2s, transform 0.2s; }
+        .plan-dark { background: var(--dark3); border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px; position: relative; transition: border-color 0.2s, transform 0.2s; }
         .plan-dark:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); }
         .plan-dark.hot { border-color: rgba(99,102,241,0.5); box-shadow: 0 0 40px rgba(99,102,241,0.15); }
-        .plan-hot-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--grad); color: white; font-size: 11px; font-weight: 700; padding: 3px 14px; border-radius: 20px; white-space: nowrap; }
-        .plan-icon-dark { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 14px; }
-        .plan-name-dark { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-        .plan-price-dark { display: flex; align-items: baseline; gap: 3px; margin-bottom: 4px; }
-        .plan-price-num-dark { font-family: 'Playfair Display', serif; font-size: 44px; color: white; line-height: 1; }
-        .plan-price-per-dark { font-size: 13px; color: var(--text3); }
-        .plan-msgs-dark { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
-        .plan-divider-dark { height: 1px; background: var(--border); margin-bottom: 18px; }
-        .plan-features-dark { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 24px; }
-        .plan-features-dark li { font-size: 13px; color: var(--text2); display: flex; align-items: flex-start; gap: 8px; }
+        .plan-hot-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--grad); color: white; font-size: 10px; font-weight: 700; padding: 2px 12px; border-radius: 20px; white-space: nowrap; }
+        .plan-icon-dark { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-bottom: 10px; }
+        .plan-name-dark { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+        .plan-price-dark { display: flex; align-items: baseline; gap: 3px; margin-bottom: 2px; }
+        .plan-price-num-dark { font-family: 'Playfair Display', serif; font-size: 28px; color: white; line-height: 1; }
+        .plan-price-per-dark { font-size: 12px; color: var(--text3); }
+        .plan-msgs-dark { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+        .plan-divider-dark { height: 1px; background: var(--border); margin-bottom: 12px; }
+        .plan-features-dark { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+        .plan-features-dark li { font-size: 12px; color: var(--text2); display: flex; align-items: flex-start; gap: 6px; }
         .plan-features-dark li .ck { flex-shrink: 0; margin-top: 1px; font-weight: 700; }
         .plan-features-dark li .nx { flex-shrink: 0; margin-top: 1px; color: var(--text3); }
-        .plan-cta-dark { display: block; text-align: center; text-decoration: none; padding: 11px; border-radius: 9px; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+        .plan-cta-dark { display: block; text-align: center; text-decoration: none; padding: 9px; border-radius: 8px; font-size: 13px; font-weight: 600; transition: all 0.2s; }
         .plan-cta-border { border: 1px solid var(--border); color: var(--text2); }
         .plan-cta-border:hover { border-color: rgba(255,255,255,0.2); color: white; }
         .plan-cta-grad { background: var(--grad); color: white; box-shadow: 0 0 20px rgba(99,102,241,0.3); }
         .plan-cta-grad:hover { opacity: 0.9; }
-        .plan-extra-dark { margin-top: 10px; text-align: center; font-size: 12px; color: var(--text3); }
+        .plan-extra-dark { margin-top: 8px; text-align: center; font-size: 11px; color: var(--text3); }
         .pricing-footer { margin-top: 28px; padding: 16px 24px; background: var(--dark3); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; color: var(--text2); text-align: center; }
         .pricing-footer strong { color: white; }
         .testi-wrap { padding: 80px 48px; max-width: 860px; margin: 0 auto; text-align: center; }
@@ -434,30 +434,30 @@ export default function LandingClient() {
             <div style={{ position: 'absolute', inset: -1, borderRadius: 24, background: 'linear-gradient(135deg,#3b82f6,#6366f1,#8b5cf6)', padding: 1, zIndex: 0 }}>
               <div style={{ borderRadius: 23, background: '#0d1117', height: '100%' }} />
             </div>
-            <div style={{ position: 'relative', zIndex: 1, borderRadius: 24, padding: '36px 32px', background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(99,102,241,0.12))', boxShadow: '0 0 60px rgba(99,102,241,0.2)' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 20, padding: '4px 12px', marginBottom: 20 }}>
+            <div style={{ position: 'relative', zIndex: 1, borderRadius: 24, padding: '22px 22px', background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(99,102,241,0.12))', boxShadow: '0 0 60px rgba(99,102,241,0.2)' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 20, padding: '4px 12px', marginBottom: 14 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', display: 'inline-block' }}></span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#818cf8', letterSpacing: '0.06em' }}>{t.trialBadge}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 72, fontWeight: 700, lineHeight: 1, background: 'linear-gradient(135deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>0€</span>
-                <span style={{ fontSize: 16, color: '#475569', fontWeight: 500 }}>{t.trialDays}</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 88, fontWeight: 700, lineHeight: 1, color: 'white' }}>0€</span>
+                <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>{t.trialDays}</span>
               </div>
-              <p style={{ fontSize: 14, color: '#64748b', marginBottom: 24, lineHeight: 1.6 }}>{t.trialDesc}</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+              <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16, lineHeight: 1.5 }}>{t.trialDesc}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 20 }}>
                 {t.trialChecks.map(item => (
-                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ color: '#818cf8', fontSize: 11, fontWeight: 700 }}>✓</span>
+                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ color: '#818cf8', fontSize: 9, fontWeight: 700 }}>✓</span>
                     </div>
-                    <span style={{ fontSize: 13, color: '#94a3b8' }}>{item}</span>
+                    <span style={{ fontSize: 12, color: '#94a3b8' }}>{item}</span>
                   </div>
                 ))}
               </div>
-              <Link href="/auth/register" style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg,#3b82f6,#6366f1)', color: 'white', fontSize: 15, fontWeight: 700, padding: '15px', borderRadius: 12, textDecoration: 'none', boxShadow: '0 8px 32px rgba(99,102,241,0.5)', letterSpacing: '-0.01em' }}>
+              <Link href="/auth/register" style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg,#3b82f6,#6366f1)', color: 'white', fontSize: 14, fontWeight: 700, padding: '12px', borderRadius: 10, textDecoration: 'none', boxShadow: '0 8px 32px rgba(99,102,241,0.5)', letterSpacing: '-0.01em' }}>
                 {t.trialCta}
               </Link>
-              <p style={{ textAlign: 'center', fontSize: 11, color: '#334155', marginTop: 12 }}>{t.trialFine}</p>
+              <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 10 }}>{t.trialFine}</p>
             </div>
           </div>
 
@@ -743,7 +743,7 @@ export default function LandingClient() {
                   <li key={f}><span className="ck" style={{ color: '#818cf8' }}>✓</span> {f}</li>
                 ))}
               </ul>
-              <Link href="/auth/register" className="plan-cta-dark plan-cta-grad" style={{ fontSize: 15, padding: 13, fontWeight: 700 }}>{t.heroCta}</Link>
+              <Link href="/auth/register" className="plan-cta-dark plan-cta-grad" style={{ fontWeight: 700 }}>{t.heroCta}</Link>
               <div className="plan-extra-dark" style={{ color: '#6366f1' }}>{t.trialFine.split('·')[1]?.trim() || 'Sin compromisos'}</div>
             </div>
 
@@ -755,7 +755,7 @@ export default function LandingClient() {
                 <span className="plan-price-num-dark">19€</span>
                 <span className="plan-price-per-dark">/{lang === 'de' ? 'Monat' : lang === 'fr' ? 'mois' : lang === 'en' ? 'mo' : 'mes'}</span>
               </div>
-              <div className="plan-msgs-dark">500 {lang === 'de' ? 'Nachrichten' : lang === 'fr' ? 'messages' : 'mensajes'} · 1 chatbot</div>
+              <div className="plan-msgs-dark">500 {lang === 'de' ? 'Nachrichten/Monat' : lang === 'fr' ? 'messages/mois' : lang === 'en' ? 'msg/month' : 'mensajes/mes'} · 1 chatbot</div>
               <div className="plan-divider-dark"></div>
               <ul className="plan-features-dark">
                 <li><span className="ck" style={{ color: '#22c55e' }}>✓</span> 1 chatbot</li>
@@ -783,7 +783,7 @@ export default function LandingClient() {
                 <span className="plan-price-num-dark">49€</span>
                 <span className="plan-price-per-dark">/{lang === 'de' ? 'Monat' : lang === 'fr' ? 'mois' : lang === 'en' ? 'mo' : 'mes'}</span>
               </div>
-              <div className="plan-msgs-dark">3.000 {lang === 'de' ? 'Nachrichten' : lang === 'fr' ? 'messages' : 'mensajes'} · 3 chatbots</div>
+              <div className="plan-msgs-dark">3.000 {lang === 'de' ? 'Nachrichten/Monat' : lang === 'fr' ? 'messages/mois' : lang === 'en' ? 'msg/month' : 'mensajes/mes'} · 3 chatbots</div>
               <div className="plan-divider-dark"></div>
               <ul className="plan-features-dark">
                 <li><span className="ck" style={{ color: '#818cf8' }}>✓</span> 3 chatbots</li>
@@ -807,7 +807,7 @@ export default function LandingClient() {
                 <span className="plan-price-num-dark">99€</span>
                 <span className="plan-price-per-dark">/{lang === 'de' ? 'Monat' : lang === 'fr' ? 'mois' : lang === 'en' ? 'mo' : 'mes'}</span>
               </div>
-              <div className="plan-msgs-dark">10.000 {lang === 'de' ? 'Nachrichten' : lang === 'fr' ? 'messages' : 'mensajes'} · 10 chatbots</div>
+              <div className="plan-msgs-dark">10.000 {lang === 'de' ? 'Nachrichten/Monat' : lang === 'fr' ? 'messages/mois' : lang === 'en' ? 'msg/month' : 'mensajes/mes'} · 10 chatbots</div>
               <div className="plan-divider-dark"></div>
               <ul className="plan-features-dark">
                 <li><span className="ck" style={{ color: '#c084fc' }}>✓</span> 10 chatbots</li>
@@ -831,10 +831,10 @@ export default function LandingClient() {
                 <span className="plan-price-num-dark">199€</span>
                 <span className="plan-price-per-dark">/{lang === 'de' ? 'Monat' : lang === 'fr' ? 'mois' : lang === 'en' ? 'mo' : 'mes'}</span>
               </div>
-              <div className="plan-msgs-dark">30.000 {lang === 'de' ? 'Nachrichten' : lang === 'fr' ? 'messages' : 'mensajes'} · {lang === 'en' ? 'up to' : lang === 'fr' ? "jusqu'à" : lang === 'de' ? 'bis zu' : 'hasta'} 50 bots</div>
+              <div className="plan-msgs-dark">30.000 {lang === 'de' ? 'Nachrichten/Monat' : lang === 'fr' ? 'messages/mois' : lang === 'en' ? 'msg/month' : 'mensajes/mes'} · 30 chatbots</div>
               <div className="plan-divider-dark"></div>
               <ul className="plan-features-dark">
-                <li><span className="ck" style={{ color: '#fb923c' }}>✓</span> {lang === 'en' ? 'Up to 50 chatbots' : lang === 'fr' ? "Jusqu'à 50 chatbots" : lang === 'de' ? 'Bis zu 50 Chatbots' : 'Hasta 50 chatbots'}</li>
+                <li><span className="ck" style={{ color: '#fb923c' }}>✓</span> 30 chatbots</li>
                 <li><span className="ck" style={{ color: '#fb923c' }}>✓</span> 30.000 {lang === 'en' ? 'msg/month' : lang === 'fr' ? 'msg/mois' : lang === 'de' ? 'Nachr./Monat' : 'mensajes/mes'}</li>
                 <li><span className="ck" style={{ color: '#fb923c' }}>✓</span> {lang === 'en' ? 'Everything in Business' : lang === 'fr' ? 'Tout le Business' : lang === 'de' ? 'Alles aus Business' : 'Todo lo de Business'}</li>
                 <li><span className="ck" style={{ color: '#fb923c' }}>✓</span> White-label</li>

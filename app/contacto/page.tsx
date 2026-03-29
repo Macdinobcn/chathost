@@ -80,7 +80,7 @@ export default function ContactPage() {
               {[
                 { icon: '📧', title: 'Email', val: 'hola@chathost.ai', href: 'mailto:hola@chathost.ai' },
                 { icon: '🌐', title: 'Web', val: 'chathost.ai', href: 'https://chathost.ai' },
-                { icon: '🏢', title: 'Empresa', val: 'Arandai — Zaragoza, España', href: 'https://arandai.com' },
+                { icon: '🏢', title: 'Empresa', val: 'Arandai — Madrid, España', href: 'https://arandai.com' },
               ].map(c => (
                 <a key={c.title} href={c.href} target={c.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer"
                   style={{ display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none' }}>
