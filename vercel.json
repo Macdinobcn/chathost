@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/recrawl",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "functions": {
+    "app/api/export-pdf/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/scrape/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/recrawl/route.ts": {
+      "maxDuration": 300
+    }
+  }
+}

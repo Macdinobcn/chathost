@@ -13,17 +13,26 @@ export async function POST(req: NextRequest) {
 
     const supabase = createAdminClient()
 
-    // 1. Obtener cliente
+    // 1. Obtener cliente — incluir is_internal y credits_balance
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, name, active, system_prompt, temperature, auto_language')
+      .select('id, name, active, system_prompt, temperature, auto_language, is_internal, credits_balance, ai_model')
       .eq('widget_id', widgetId)
       .single()
 
     if (clientError || !client) return NextResponse.json({ error: 'Widget no encontrado' }, { status: 404 })
     if (!client.active) return NextResponse.json({ error: 'Widget inactivo' }, { status: 403 })
 
-    // 2. Knowledge base
+    // 2. Bloquear si sin créditos — EXCEPTO si es bot interno
+    if (!client.is_internal && (client.credits_balance ?? 0) <= 0) {
+      return NextResponse.json({
+        respuesta: 'Lo sentimos, este asistente ha alcanzado el límite de mensajes del mes. Por favor, contacta con nosotros para más información.',
+        sessionId,
+        sinCreditos: true,
+      })
+    }
+
+    // 3. Knowledge base
     const { data: kb } = await supabase
       .from('knowledge_bases')
       .select('content_md')
@@ -38,14 +47,13 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // 3. Configuración maestra global (Alex)
+    // 4. Configuración maestra global
     const { data: masterSettings } = await supabase
       .from('master_settings')
       .select('*')
       .single()
 
-    // 4. Construir system prompt en 4 capas:
-    //    [comportamiento base] + [formato] + [normas] + [prompt del cliente]
+    // 5. System prompt en 4 capas
     const bloques = [
       masterSettings?.master_prompt || '',
       masterSettings?.master_format || '',
@@ -55,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const systemPromptFinal = bloques.join('\n\n---\n\n')
 
-    // 5. Mensajes especiales activos hoy
+    // 6. Mensajes especiales activos hoy
     const hoy = new Date().toISOString().split('T')[0]
     const { data: specialMsgs } = await supabase
       .from('special_messages')
@@ -67,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     const mensajesEspeciales = specialMsgs?.map(m => `${m.title}: ${m.content}`) || []
 
-    // 6. Conversación
+    // 7. Conversación
     let conversationId: string
     const { data: convExistente } = await supabase
       .from('conversations')
@@ -92,12 +100,12 @@ export async function POST(req: NextRequest) {
       conversationId = nuevaConv!.id
     }
 
-    // 7. Temperatura: usa la del cliente respetando el máximo que Alex permite
+    // 8. Temperatura
     const tempCliente = client.temperature ?? 0.7
     const tempMaxima = masterSettings?.clients_max_temperature ?? 1.0
     const temperaturaFinal = Math.min(tempCliente, tempMaxima)
 
-    // 8. Llamar a Claude
+    // 9. Llamar a Claude
     const { respuesta, tokensUsados, costeEur, creditosConsumidos } = await responderChat({
       nombreCliente: client.name,
       knowledgeBase: kb.content_md,
@@ -109,16 +117,16 @@ export async function POST(req: NextRequest) {
         ? (client.auto_language ?? true)
         : (masterSettings?.force_auto_language ?? true),
       mensajesEspeciales,
-      modeloId: (body?.modelOverride || 'claude-haiku-4-5-20251001') as any,
+      modeloId: (body?.modelOverride || client.ai_model || 'claude-haiku-4-5-20251001') as any,
     })
 
-    // 9. Guardar mensajes
+    // 10. Guardar mensajes
     await supabase.from('messages').insert([
       { conversation_id: conversationId, role: 'user', content: mensaje },
       { conversation_id: conversationId, role: 'assistant', content: respuesta, tokens_used: tokensUsados, cost_eur: costeEur },
     ])
 
-    // 10. Costes
+    // 11. Costes — siempre registrar, incluso para internos
     const mes = new Date().toISOString().slice(0, 7)
     const { data: costes } = await supabase
       .from('client_costs')
@@ -138,6 +146,13 @@ export async function POST(req: NextRequest) {
         client_id: client.id, month: mes,
         messages_count: 1, tokens_total: tokensUsados, cost_eur: costeEur,
       })
+    }
+
+    // 12. Descontar créditos — SOLO si no es interno
+    if (!client.is_internal) {
+      await supabase.from('clients').update({
+        credits_balance: Math.max(0, (client.credits_balance ?? 0) - creditosConsumidos),
+      }).eq('id', client.id)
     }
 
     return NextResponse.json({ respuesta, sessionId, creditosConsumidos })

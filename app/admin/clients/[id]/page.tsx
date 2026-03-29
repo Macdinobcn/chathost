@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useT, formatCurrency, formatNumber, IDIOMAS, type Idioma } from '@/lib/i18n'
+import { S, PANEL_SKINS, applySkinVars, type PanelSkin } from '@/lib/admin-styles'
+import AdminTopbar from '@/components/AdminTopbar'
+import TabGeneral from './tabs/TabGeneral'
+import TabKnowledgeBase from './tabs/TabKnowledgeBase'
+import TabActivity from './tabs/TabActivity'
+import TabTeam from './tabs/TabTeam'
+import TabBilling from './tabs/TabBilling'
 
 interface Cliente {
   id: string; name: string; website_url: string; email: string; plan: string
@@ -21,6 +28,12 @@ interface Cliente {
   widget_weather_place: string | null
   widget_occupancy_enabled: boolean; widget_occupancy_pct: number | null; widget_occupancy_text: string | null
   widget_webcam_enabled: boolean; widget_webcam_url: string | null
+  // GDPR
+  gdpr_enabled: boolean | null
+  gdpr_title: string | null
+  gdpr_text: string | null
+  gdpr_button_text: string | null
+  gdpr_privacy_url: string | null
   knowledge_bases: { scraping_status: string; pages_scraped: number; words_count: number; last_scraped_at: string; content_md: string }[]
   client_costs: { month: string; messages_count: number; tokens_total: number; cost_eur: number }[]
 }
@@ -29,7 +42,7 @@ interface KBSource { id: string; type: string; url: string; filename: string; fi
 interface Conversation { id: string; session_id: string; started_at: string; message_count: number; language: string; confidence_score: number; first_message?: string }
 interface SpecialMsg { id: string; title: string; content: string; active: boolean; start_date: string | null; end_date: string | null; show_on_open: boolean; msg_color?: string; msg_type?: string }
 
-const TABS = ['General', 'Knowledge base', 'Chat', 'Noticias', 'Activity', 'Widget', 'Stats', 'Playground']
+const TABS = ['General', 'Knowledge base', 'Chat', 'Noticias', 'Activity', 'Equipo', 'Billing', 'Widget', 'Stats', 'Playground']
 
 // Colores predefinidos para el panel de tema del admin
 const THEME_PRESETS = [
@@ -39,6 +52,19 @@ const THEME_PRESETS = [
   { label: 'Verde',   value: '#059669' },
   { label: 'Cian',    value: '#0891b2' },
   { label: 'Slate',   value: '#475569' },
+]
+
+const DEMO_COUNTRIES = [
+  { country: 'España', code: 'ES', count: 8234, flag: '🇪🇸' },
+  { country: 'Francia', code: 'FR', count: 1205, flag: '🇫🇷' },
+  { country: 'Alemania', code: 'DE', count: 834, flag: '🇩🇪' },
+  { country: 'Reino Unido', code: 'GB', count: 621, flag: '🇬🇧' },
+  { country: 'Italia', code: 'IT', count: 445, flag: '🇮🇹' },
+  { country: 'Países Bajos', code: 'NL', count: 312, flag: '🇳🇱' },
+  { country: 'Bélgica', code: 'BE', count: 198, flag: '🇧🇪' },
+  { country: 'Portugal', code: 'PT', count: 167, flag: '🇵🇹' },
+  { country: 'Suiza', code: 'CH', count: 143, flag: '🇨🇭' },
+  { country: 'EE.UU.', code: 'US', count: 89, flag: '🇺🇸' },
 ]
 
 const MODELOS = [
@@ -73,38 +99,10 @@ function renderMd(text: string, color = '#2563eb'): string {
     .replace(/\n/g, '<br>')
 }
 
-// Estilos estáticos (sin depender del tema dinámico)
-const S = {
-  wrap: { minHeight: '100vh', background: '#f5f5f5', fontFamily: 'system-ui,-apple-system,sans-serif' } as React.CSSProperties,
-  topbar: { background: 'white', borderBottom: '1px solid #e8e8e8', padding: '0 28px', height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as React.CSSProperties,
-  body: { padding: '22px 28px', maxWidth: 1200, margin: '0 auto' } as React.CSSProperties,
-  card: { background: 'white', border: '1px solid #e8e8e8', borderRadius: 10, padding: '18px 20px', marginBottom: 14 } as React.CSSProperties,
-  lbl: { fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 5 },
-  inp: { width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 7, fontSize: 13, color: '#111', background: 'white', fontFamily: 'inherit', boxSizing: 'border-box' as const },
-  g2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 } as React.CSSProperties,
-  // btn: el bg por defecto se pasa desde el componente con themeColor
-  btn: (bg = '#2563eb', color = 'white') => ({ background: bg, color, border: bg === 'white' ? '1px solid #e5e7eb' : 'none', padding: '8px 16px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' } as React.CSSProperties),
-  secLabel: { fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 10 },
-  statRow: (cols: number) => ({ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, background: 'white', border: '1px solid #e8e8e8', borderRadius: 10, overflow: 'hidden', marginBottom: 14 } as React.CSSProperties),
-  statBox: { padding: '14px 18px', borderRight: '1px solid #f0f0f0' } as React.CSSProperties,
-  tag: (bg: string, col: string) => ({ fontSize: 10, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: bg, color: col, display: 'inline-block' } as React.CSSProperties),
-  tgl: (on: boolean, color = '#2563eb') => ({ width: 36, height: 20, borderRadius: 10, background: on ? color : '#d1d5db', position: 'relative' as const, cursor: 'pointer', flexShrink: 0, display: 'inline-block' }),
-  tglK: (on: boolean) => ({ position: 'absolute' as const, top: 3, left: on ? 19 : 3, width: 14, height: 14, borderRadius: '50%', background: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.15)', transition: 'left 0.15s' }),
-}
+// S importado desde @/lib/admin-styles
 
-// Demo data para mapa
-const DEMO_COUNTRIES = [
-  { country: 'España', code: 'ES', count: 8234, flag: '🇪🇸' },
-  { country: 'Francia', code: 'FR', count: 1205, flag: '🇫🇷' },
-  { country: 'Alemania', code: 'DE', count: 834, flag: '🇩🇪' },
-  { country: 'Reino Unido', code: 'GB', count: 621, flag: '🇬🇧' },
-  { country: 'Italia', code: 'IT', count: 445, flag: '🇮🇹' },
-  { country: 'Países Bajos', code: 'NL', count: 312, flag: '🇳🇱' },
-  { country: 'Bélgica', code: 'BE', count: 198, flag: '🇧🇪' },
-  { country: 'Portugal', code: 'PT', count: 167, flag: '🇵🇹' },
-  { country: 'Suiza', code: 'CH', count: 143, flag: '🇨🇭' },
-  { country: 'EE.UU.', code: 'US', count: 89, flag: '🇺🇸' },
-]
+
+
 
 export default function ClienteDetallePage() {
   const params = useParams()
@@ -123,11 +121,35 @@ export default function ClienteDetallePage() {
   const [themePanelOpen, setThemePanelOpen] = useState(false)
   const [themeCustomInput, setThemeCustomInput] = useState('#2563eb')
   const themePanelRef = useRef<HTMLDivElement>(null)
+  // Skin del panel (layout/fondo)
+  const [panelSkin, setPanelSkin] = useState<PanelSkin>('cloud')
+  // Orden de tabs con drag & drop
+  const [tabOrder, setTabOrder] = useState<string[]>(TABS)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const [tabsLocked, setTabsLocked] = useState(false)
 
   useEffect(() => {
     // Leer el tema guardado en localStorage al montar
     const saved = localStorage.getItem('arandai_theme_primary')
     if (saved) { setThemeColor(saved); setThemeCustomInput(saved) }
+    // Leer skin guardado y aplicar variables CSS
+    const savedSkin = (localStorage.getItem('arandai_panel_skin') as PanelSkin | null)
+    const activeSkin: PanelSkin = (savedSkin && savedSkin in PANEL_SKINS) ? savedSkin : 'cloud'
+    if (savedSkin && savedSkin in PANEL_SKINS) setPanelSkin(savedSkin)
+    applySkinVars(activeSkin)
+    // Leer orden de tabs
+    const savedOrder = localStorage.getItem('arandai_tab_order')
+    if (savedOrder) {
+      try {
+        const parsed: string[] = JSON.parse(savedOrder)
+        const valid = parsed.filter(t => TABS.includes(t))
+        const missing = TABS.filter(t => !valid.includes(t))
+        setTabOrder([...valid, ...missing])
+      } catch {}
+    }
+    // Leer estado del candado
+    if (localStorage.getItem('arandai_tabs_locked') === 'true') setTabsLocked(true)
     // Cerrar panel al hacer clic fuera
     function handleClick(e: MouseEvent) {
       if (themePanelRef.current && !themePanelRef.current.contains(e.target as Node)) {
@@ -142,8 +164,23 @@ export default function ClienteDetallePage() {
     setThemeColor(color)
     setThemeCustomInput(color)
     localStorage.setItem('arandai_theme_primary', color)
-    // Actualizar CSS variable para los sliders y animaciones
     document.documentElement.style.setProperty('--color-primary', color)
+  }
+  function aplicarSkin(skin: PanelSkin) {
+    setPanelSkin(skin)
+    localStorage.setItem('arandai_panel_skin', skin)
+    applySkinVars(skin)
+  }
+  function onDragStart(i: number) { setDragIdx(i) }
+  function onDragOver(e: React.DragEvent, i: number) { e.preventDefault(); setDragOverIdx(i) }
+  function onDrop(i: number) {
+    if (dragIdx === null || dragIdx === i) { setDragIdx(null); setDragOverIdx(null); return }
+    const next = [...tabOrder]
+    const [moved] = next.splice(dragIdx, 1)
+    next.splice(i, 0, moved)
+    setTabOrder(next)
+    localStorage.setItem('arandai_tab_order', JSON.stringify(next))
+    setDragIdx(null); setDragOverIdx(null)
   }
   // -------------------------------------------------------------------------
 
@@ -160,7 +197,8 @@ export default function ClienteDetallePage() {
     widget_name: '', widget_color: '#2563eb', widget_position: 'bottom-right',
     initial_message: '¡Hola! ¿En qué puedo ayudarte?',
     suggested_messages: [] as string[], widget_placeholder: 'Escribe tu pregunta...',
-    widget_logo_url: '', widget_icon_url: '', widget_window_size: 'medium'
+    widget_logo_url: '', widget_icon_url: '', widget_window_size: 'medium',
+    widget_theme: 'light' as 'light' | 'dark',
   })
 
   // KB
@@ -177,6 +215,16 @@ export default function ClienteDetallePage() {
     widget_occupancy_text: '',
     widget_webcam_enabled: false,
     widget_webcam_url: '',
+  })
+
+  // GDPR por cliente
+  const [gdprForm, setGdprForm] = useState({
+    gdpr_enabled: true,
+    gdpr_title: '',
+    gdpr_text: '',
+    gdpr_button_text: '',
+    gdpr_privacy_url: '',
+    useCustom: false,
   })
   const [weatherPreview, setWeatherPreview] = useState<{tmax:number,tmin:number,code:number,date:string}[]>([])
   const [loadingWeather, setLoadingWeather] = useState(false)
@@ -245,8 +293,6 @@ export default function ClienteDetallePage() {
   const [pgTokensTotal, setPgTokensTotal] = useState(0)
   const [pgCosteTotal, setPgCosteTotal] = useState(0)
   const pgBottomRef = useRef<HTMLDivElement>(null)
-  const [pgMasterSettings, setPgMasterSettings] = useState<{ master_prompt: string; master_format: string; master_rules: string } | null>(null)
-  const [pgMasterTab, setPgMasterTab] = useState<'base' | 'formato' | 'normas'>('base')
   const [pgMasterGuardando, setPgMasterGuardando] = useState(false)
   const [pgMasterGuardado, setPgMasterGuardado] = useState(false)
 
@@ -263,7 +309,6 @@ export default function ClienteDetallePage() {
   }, [tab])
   useEffect(() => { if (tab === 'Knowledge base') cargarSources() }, [tab])
   useEffect(() => {
-    if (tab === 'Playground' && !pgMasterSettings) cargarPgMaster()
     if (tab === 'Playground') setPgMsgs([{ role: 'assistant', content: cliente?.initial_message || '¡Hola! ¿En qué puedo ayudarte?' }])
   }, [tab])
 
@@ -342,21 +387,6 @@ export default function ClienteDetallePage() {
     setTab(nuevaTab)
   }
 
-  async function cargarPgMaster() {
-    const res = await fetch('/api/master-settings')
-    const data = await res.json()
-    setPgMasterSettings(data.settings || { master_prompt: '', master_format: '', master_rules: '' })
-  }
-
-  async function guardarPgMaster() {
-    if (!pgMasterSettings) return
-    setPgMasterGuardando(true)
-    await fetch('/api/master-settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pgMasterSettings) })
-    setPgMasterGuardando(false)
-    setPgMasterGuardado(true)
-    setTimeout(() => setPgMasterGuardado(false), 2500)
-  }
-
   async function pgEnviar() {
     if (!pgInput.trim() || pgCargando || !cliente) return
     const pregunta = pgInput.trim()
@@ -413,6 +443,7 @@ export default function ClienteDetallePage() {
         suggested_messages: c.suggested_messages || [], widget_placeholder: c.widget_placeholder || 'Escribe tu pregunta...',
         widget_logo_url: c.widget_logo_url || '', widget_icon_url: c.widget_icon_url || '',
         widget_window_size: c.widget_window_size || 'medium',
+        widget_theme: (c.widget_theme || 'light') as 'light' | 'dark',
       }
       setWidgetForm(wf)
       widgetFormRef.current = wf
@@ -432,6 +463,15 @@ export default function ClienteDetallePage() {
       if (c.widget_weather_place) setLugarBusqueda(c.widget_weather_place)
       setRecrawlDays(c.recrawl_days ?? 10)
       setTextoKB(c.knowledge_bases?.[0]?.content_md || '')
+      // GDPR
+      setGdprForm({
+        gdpr_enabled: c.gdpr_enabled ?? true,
+        gdpr_title: c.gdpr_title || '',
+        gdpr_text: c.gdpr_text || '',
+        gdpr_button_text: c.gdpr_button_text || '',
+        gdpr_privacy_url: c.gdpr_privacy_url || '',
+        useCustom: !!(c.gdpr_title || c.gdpr_text || c.gdpr_privacy_url || c.gdpr_button_text),
+      })
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }
@@ -733,6 +773,7 @@ export default function ClienteDetallePage() {
     router.push('/admin')
   }
 
+  const skin = PANEL_SKINS[panelSkin]
   if (loading) return <div style={{ ...S.wrap, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 13 }}>Cargando...</div>
   if (!cliente) return <div style={{ padding: 48, textAlign: 'center', fontFamily: 'system-ui', fontSize: 13 }}><p style={{ color: '#ef4444', marginBottom: 12 }}>No encontrado</p><Link href="/admin" style={{ color: themeColor }}>← Admin</Link></div>
 
@@ -788,444 +829,242 @@ export default function ClienteDetallePage() {
       )}
 
       {/* -- TOPBAR --------------------------------------------------------- */}
-      <div style={S.topbar}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Link href="/admin" style={{ textDecoration: 'none', fontSize: 14, fontWeight: 700, color: '#111' }}>
-            ChatHost <span style={{ fontSize: 11, color: '#aaa', fontWeight: 400 }}>ADMIN</span>
-          </Link>
-          <span style={{ color: '#e0e0e0' }}>/</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {widgetForm.widget_icon_url
-              ? <img src={widgetForm.widget_icon_url} style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }} />
-              : <div style={{ width: 8, height: 8, borderRadius: '50%', background: widgetForm.widget_color }} />}
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{cliente.name}</span>
-            <span style={{ fontSize: 10, fontWeight: 600, color: cliente.active ? '#059669' : '#aaa' }}>{cliente.active ? '● activo' : '○ inactivo'}</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <a href={`/widget/${cliente.widget_id}?color=${encodeURIComponent(widgetForm.widget_color)}`} target="_blank" style={{ ...S.btn('white', themeColor), textDecoration: 'none', display: 'inline-block' }}>💬 {tr('chat')}</a>
-
-          {/* -- PANEL DE TEMA ------------------------------------------- */}
-          <div ref={themePanelRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => setThemePanelOpen(p => !p)}
-              title="Cambiar color del panel"
-              style={{ ...S.btn('white', '#555'), display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px' }}
-            >
-              <div style={{ width: 14, height: 14, borderRadius: '50%', background: themeColor, border: '2px solid #e5e7eb', flexShrink: 0 }} />
-              <span style={{ fontSize: 12 }}>Tema</span>
-            </button>
-
-            {themePanelOpen && (
-              <div className="theme-panel-enter" style={{
-                position: 'absolute', top: 42, right: 0, zIndex: 500,
-                background: 'white', border: '1px solid #e5e7eb', borderRadius: 12,
-                padding: 16, width: 220, boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
-              }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Color del panel</div>
-                <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 12 }}>
-                  {THEME_PRESETS.map(p => (
-                    <div key={p.value}
-                      onClick={() => aplicarTema(p.value)}
-                      title={p.label}
-                      style={{
-                        width: 28, height: 28, borderRadius: 8, background: p.value, cursor: 'pointer',
-                        border: themeColor === p.value ? '3px solid #111' : '2px solid transparent',
-                        transition: 'border 0.1s', flexShrink: 0
-                      }}
-                    />
-                  ))}
+      <AdminTopbar
+        clienteName={cliente.name}
+        clienteActivo={cliente.active}
+        clienteColor={widgetForm.widget_color}
+        clienteIconUrl={widgetForm.widget_icon_url}
+        widgetId={cliente.widget_id}
+        actions={
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Panel de tema */}
+            <div ref={themePanelRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setThemePanelOpen(p => !p)}
+                title="Cambiar color del panel"
+                style={{ fontSize: 12, fontWeight: 500, color: '#94a3b8', padding: '6px 10px', borderRadius: 8, border: '1px solid #334155', background: '#0f172a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <div style={{ width: 12, height: 12, borderRadius: '50%', background: themeColor, border: '2px solid #475569', flexShrink: 0 }} />
+                <span>Tema</span>
+              </button>
+              {themePanelOpen && (
+                <div style={{ position: 'absolute', top: 42, right: 0, zIndex: 500, background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, width: 220, boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Tema del panel</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 14 }}>
+                    {(['cloud','warm','nordic','forest'] as PanelSkin[]).map(key => {
+                      const sk = PANEL_SKINS[key]; const active = panelSkin === key
+                      return (
+                        <div key={key} onClick={() => aplicarSkin(key)}
+                          style={{ borderRadius: 9, cursor: 'pointer', border: `2px solid ${active ? themeColor : '#e5e7eb'}`, overflow: 'hidden', transition: 'all 0.15s', boxShadow: active ? `0 0 0 3px ${themeColor}22` : 'none' }}>
+                          <div style={{ background: sk.vars['--ch-wrap-bg'], padding: '5px 7px 4px' }}>
+                            <div style={{ background: sk.tabBarBg, borderRadius: 3, padding: '2px 5px', marginBottom: 3, display: 'flex', gap: 3 }}>
+                              <div style={{ width: 14, height: 3, borderRadius: 2, background: themeColor }} />
+                              <div style={{ width: 10, height: 3, borderRadius: 2, background: '#c8c8c8' }} />
+                            </div>
+                            <div style={{ background: sk.vars['--ch-card-bg'], border: `1px solid ${sk.vars['--ch-card-border']}`, borderRadius: 3, padding: '3px 5px' }}>
+                              <div style={{ width: '55%', height: 2, borderRadius: 2, background: '#d0d0d0', marginBottom: 2 }} />
+                              <div style={{ width: '35%', height: 2, borderRadius: 2, background: '#e0e0e0' }} />
+                            </div>
+                          </div>
+                          <div style={{ background: sk.tabBarBg, padding: '3px 7px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: active ? themeColor : '#555' }}>{sk.emoji} {sk.label}</span>
+                            {active && <span style={{ fontSize: 8, color: themeColor }}>✓</span>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div style={{ gridColumn: '1/-1', fontSize: 10, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 4, marginBottom: 2 }}>Oscuros</div>
+                    {(['midnight','graphite'] as PanelSkin[]).map(key => {
+                      const sk = PANEL_SKINS[key]; const active = panelSkin === key
+                      return (
+                        <div key={key} onClick={() => aplicarSkin(key)}
+                          style={{ borderRadius: 9, cursor: 'pointer', border: `2px solid ${active ? themeColor : '#334155'}`, overflow: 'hidden', transition: 'all 0.15s', boxShadow: active ? `0 0 0 3px ${themeColor}22` : 'none' }}>
+                          <div style={{ background: sk.vars['--ch-wrap-bg'], padding: '5px 7px 4px' }}>
+                            <div style={{ background: sk.tabBarBg, borderRadius: 3, padding: '2px 5px', marginBottom: 3, display: 'flex', gap: 3 }}>
+                              <div style={{ width: 14, height: 3, borderRadius: 2, background: themeColor }} />
+                              <div style={{ width: 10, height: 3, borderRadius: 2, background: '#475569' }} />
+                            </div>
+                            <div style={{ background: sk.vars['--ch-card-bg'], border: `1px solid ${sk.vars['--ch-card-border']}`, borderRadius: 3, padding: '3px 5px' }}>
+                              <div style={{ width: '55%', height: 2, borderRadius: 2, background: '#475569', marginBottom: 2 }} />
+                              <div style={{ width: '35%', height: 2, borderRadius: 2, background: '#334155' }} />
+                            </div>
+                          </div>
+                          <div style={{ background: sk.tabBarBg, padding: '3px 7px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: active ? themeColor : '#94a3b8' }}>{sk.emoji} {sk.label}</span>
+                            {active && <span style={{ fontSize: 8, color: themeColor }}>✓</span>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Color del panel</div>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 12 }}>
+                    {THEME_PRESETS.map(p => (
+                      <div key={p.value} onClick={() => aplicarTema(p.value)} title={p.label}
+                        style={{ width: 28, height: 28, borderRadius: 8, background: p.value, cursor: 'pointer', border: themeColor === p.value ? '3px solid #111' : '2px solid transparent', flexShrink: 0 }} />
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#aaa', marginBottom: 6 }}>Personalizado</div>
+                  <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+                    <input type="color" value={themeCustomInput} onChange={e => setThemeCustomInput(e.target.value)} onBlur={e => aplicarTema(e.target.value)} style={{ width: 36, height: 32, border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', padding: 2, flexShrink: 0 }} />
+                    <input type="text" value={themeCustomInput} onChange={e => setThemeCustomInput(e.target.value)} onBlur={e => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) aplicarTema(e.target.value) }} placeholder="#2563eb" style={{ ...S.inp, width: 90, fontSize: 12, padding: '6px 9px' }} />
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: '#aaa', marginBottom: 6 }}>Personalizado</div>
-                <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-                  <input type="color" value={themeCustomInput}
-                    onChange={e => setThemeCustomInput(e.target.value)}
-                    onBlur={e => aplicarTema(e.target.value)}
-                    style={{ width: 36, height: 32, border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer', padding: 2, flexShrink: 0 }}
-                  />
-                  <input type="text" value={themeCustomInput}
-                    onChange={e => setThemeCustomInput(e.target.value)}
-                    onBlur={e => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) aplicarTema(e.target.value) }}
-                    placeholder="#2563eb"
-                    style={{ ...S.inp, flex: 1, width: 'auto', fontSize: 12, padding: '6px 9px' }}
-                  />
-                </div>
-                <div style={{ marginTop: 10, fontSize: 10, color: '#bbb' }}>Se guarda automáticamente en este navegador</div>
-              </div>
-            )}
+              )}
+            </div>
+            {/* Selector idioma */}
+            <select value={lang} onChange={async e => { const newLang = e.target.value as Idioma; setLang(newLang); await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ panel_language: newLang }) }) }}
+              style={{ fontSize: 12, fontWeight: 500, color: '#94a3b8', padding: '6px 10px', borderRadius: 8, border: '1px solid #334155', background: '#0f172a', cursor: 'pointer' }}>
+              {IDIOMAS.map(i => <option key={i.code} value={i.code}>{i.flag} {i.label}</option>)}
+            </select>
           </div>
+        }
+      />
 
-          {/* Selector de idioma del panel */}
-          <select
-            value={lang}
-            onChange={async e => {
-              const newLang = e.target.value as Idioma
-              setLang(newLang)
-              await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ panel_language: newLang }) })
+      <div style={{ background: skin.tabBarBg, borderBottom: skin.tabBarBorder, padding: '0 28px', display: 'flex', gap: 0, overflowX: 'auto', alignItems: 'center', position: 'sticky', top: 56, zIndex: 90 }}>
+        {tabOrder.map((t, i) => (
+          <button
+            key={t}
+            draggable={!tabsLocked}
+            onDragStart={() => !tabsLocked && onDragStart(i)}
+            onDragOver={e => !tabsLocked && onDragOver(e, i)}
+            onDrop={() => !tabsLocked && onDrop(i)}
+            onDragEnd={() => { setDragIdx(null); setDragOverIdx(null) }}
+            onClick={() => cambiarTab(t)}
+            title={tabsLocked ? t : 'Arrastra para reordenar'}
+            style={{
+              padding: '13px 16px', border: 'none',
+              background: !tabsLocked && dragOverIdx === i ? `${themeColor}12` : 'transparent',
+              cursor: tabsLocked ? 'pointer' : 'grab',
+              fontSize: 13, fontFamily: 'inherit', fontWeight: tab === t ? 600 : 400,
+              color: tab === t ? themeColor : (panelSkin === 'dark' ? '#94a3b8' : '#64748b'),
+              borderBottom: `2px solid ${tab === t ? themeColor : 'transparent'}`,
+              transition: 'all 0.15s', whiteSpace: 'nowrap',
+              opacity: !tabsLocked && dragIdx === i ? 0.4 : 1,
+              outline: !tabsLocked && dragOverIdx === i ? `2px dashed ${themeColor}` : 'none',
+              borderRadius: 4,
             }}
-            style={{ ...S.btn('white', '#555'), padding: '6px 10px', fontSize: 13 }}
           >
-            {IDIOMAS.map(i => <option key={i.code} value={i.code}>{i.flag} {i.label}</option>)}
-          </select>
-        </div>
-      </div>
-      <div style={{ background: 'white', borderBottom: '1px solid #e8e8e8', padding: '0 28px', display: 'flex', gap: 0, overflowX: 'auto' }}>
-        {TABS.map(t => (
-      <button key={t} onClick={() => cambiarTab(t)} style={{
-            padding: '11px 14px', border: 'none', background: 'transparent', cursor: 'pointer',
-            fontSize: 12, fontFamily: 'inherit', fontWeight: tab === t ? 600 : 400,
-            color: tab === t ? themeColor : '#888',
-            borderBottom: `2px solid ${tab === t ? themeColor : 'transparent'}`,
-            transition: 'all 0.15s', whiteSpace: 'nowrap'
-          }}>{t}</button>
+            {t}
+            {t === 'Widget' && widgetDirty && (
+              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', marginLeft: 5, verticalAlign: 'middle', marginBottom: 1 }} />
+            )}
+          </button>
         ))}
+        {/* Candado */}
+        <button
+          onClick={() => { const next = !tabsLocked; setTabsLocked(next); localStorage.setItem('arandai_tabs_locked', String(next)) }}
+          title={tabsLocked ? 'Desbloquear orden de tabs' : 'Bloquear orden de tabs'}
+          style={{ marginLeft: 'auto', flexShrink: 0, padding: '4px 8px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 15, opacity: 0.5, transition: 'opacity 0.15s' }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
+        >
+          {tabsLocked ? '🔒' : '🔓'}
+        </button>
       </div>
 
       <div style={S.body}>
 
         {/* --- GENERAL --------------------------------------------------- */}
         {tab === 'General' && (
-          <>
-            <div style={S.statRow(4)}>
-              {[
-                { lbl: 'Mensajes este mes', val: costeMes?.messages_count?.toLocaleString() || '0', color: '#4B7BE5' },
-                { lbl: 'Mensajes disponibles', val: (() => { const PLAN_MSGS: Record<string,number> = {basic:500,pro:3000,business:10000,agency:30000}; const max = PLAN_MSGS[cliente.plan] || 500; const used = costeMes?.messages_count || 0; return (max - used).toLocaleString() + ' / ' + max.toLocaleString() })(), color: '#22c55e' },
-                { lbl: 'Palabras en KB', val: kb?.words_count?.toLocaleString() || '0', color: themeColor },
-                { lbl: 'Plan', val: cliente.plan, color: '#8b5cf6' },
-              ].map((s, i) => (
-                <div key={s.lbl} style={{ ...S.statBox, borderRight: i < 3 ? '1px solid #f0f0f0' : 'none' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>{s.lbl}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</div>
-                </div>
-              ))}
-            </div>
-            <div style={S.g2}>
-              <div style={S.card}>
-                <div style={S.secLabel}>Datos del cliente</div>
-                <div style={{ display: 'grid', gap: 12 }}>
-                  {[{ l: 'Nombre', k: 'name', t: 'text' }, { l: 'URL web', k: 'website_url', t: 'url' }, { l: 'Email', k: 'email', t: 'email' }].map(f => (
-                    <div key={f.k}><label style={S.lbl}>{f.l}</label><input type={f.t} value={(formGeneral as any)[f.k]} onChange={e => setFormGeneral({ ...formGeneral, [f.k]: e.target.value })} style={S.inp} /></div>
-                  ))}
-                  <div><label style={S.lbl}>Plan</label>
-                    <select value={formGeneral.plan} onChange={e => setFormGeneral({ ...formGeneral, plan: e.target.value })} style={{ ...S.inp, padding: '8px 12px' }}>
-                      <option value="basic">Basic — €19/mes</option><option value="pro">Pro — €49/mes</option><option value="business">Business — €99/mes</option><option value="agency">Agency — €199/mes</option>
-                    </select>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input type="checkbox" checked={formGeneral.active} id="act" onChange={e => setFormGeneral({ ...formGeneral, active: e.target.checked })} />
-                    <label htmlFor="act" style={{ fontSize: 13, color: '#374151' }}>Cliente activo</label>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14 }}>
-                  <button onClick={() => guardar('general', formGeneral)} style={S.btn(themeColor)}>{saving.general ? 'Guardando...' : 'Guardar'}</button>
-                  {saved.general && <span style={{ fontSize: 12, color: '#22c55e' }}>{saved.general}</span>}
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {(() => {
-                  const PLAN_MSGS: Record<string,number> = {basic:500,pro:3000,business:10000,agency:30000}
-                  const max = PLAN_MSGS[cliente.plan] || 500
-                  const used = costeMes?.messages_count || 0
-                  const restantes = max - used
-                  const pct = Math.min(100, Math.round(used / max * 100))
-                  return [
-                    { lbl: 'Mensajes este mes', val: used.toLocaleString(), color: '#4B7BE5', icon: '💬', bg: '#eff6ff' },
-                    { lbl: 'Mensajes restantes', val: restantes.toLocaleString() + ' de ' + max.toLocaleString(), color: restantes < max * 0.2 ? '#ef4444' : '#22c55e', icon: restantes < max * 0.2 ? '⚠️' : '✅', bg: restantes < max * 0.2 ? '#fef2f2' : '#f0fdf4', extra: pct },
-                    { lbl: 'Palabras en KB', val: kb?.words_count?.toLocaleString() || '0', color: themeColor, icon: '📚', bg: `${themeColor}12` },
-                  ]
-                })().map((s: any) => (
-                  <div key={s.lbl} style={{ ...S.card, marginBottom: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>{s.icon}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 11, color: '#aaa' }}>{s.lbl}</div>
-                        <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</div>
-                      </div>
-                    </div>
-                    {s.extra !== undefined && (
-                      <div style={{ marginTop: 8, height: 4, background: '#e2e8f0', borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: s.extra + '%', borderRadius: 2, background: s.extra > 80 ? '#ef4444' : s.extra > 50 ? '#f59e0b' : '#22c55e', transition: 'width 0.3s' }} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
+          <TabGeneral
+            cliente={cliente} kb={kb} costeMes={costeMes}
+            formGeneral={formGeneral} setFormGeneral={setFormGeneral}
+            guardar={guardar} eliminarCliente={eliminarCliente}
+            saving={saving} saved={saved} themeColor={themeColor} tr={tr}
+          />
         )}
 
         {/* --- KNOWLEDGE BASE -------------------------------------------- */}
         {tab === 'Knowledge base' && (
-          <div style={{ display: 'grid', gap: 14 }}>
-            {/* Stats + scraping */}
-            <div style={S.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                <div><div style={S.secLabel}>Knowledge base</div><div style={{ fontSize: 12, color: '#888' }}>Información que usa el chatbot para responder</div></div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setMostrarEditorKB(!mostrarEditorKB)} style={S.btn('white', '#555')}>✏️ Editar texto</button>
-                  <button onClick={lanzarScraping} disabled={scraping} style={S.btn(scraping ? '#aaa' : '#4B7BE5')}>{scraping ? '⏳ Scrapeando...' : '↺ Re-crawl todo'}</button>
-                </div>
-              </div>
-
-              {msgScraping && (
-                <div style={{ background: msgScraping.startsWith('✓') ? '#f0fdf4' : '#fef2f2', border: `1px solid ${msgScraping.startsWith('✓') ? '#bbf7d0' : '#fecaca'}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: msgScraping.startsWith('✓') ? '#166534' : '#991b1b', marginBottom: 14 }}>{msgScraping}</div>
-              )}
-
-              <div style={S.statRow(4)}>
-                {[
-                  { lbl: 'Estado', val: kb?.scraping_status === 'ok' ? '✅ OK' : kb?.scraping_status === 'error' ? '❌ Error' : '⏳ Pendiente' },
-                  { lbl: 'Páginas', val: String(kb?.pages_scraped || 0) },
-                  { lbl: 'Palabras', val: kb?.words_count?.toLocaleString() || '0' },
-                  { lbl: 'Actualizado', val: kb ? new Date(kb.last_scraped_at).toLocaleDateString('es-ES') : '—' },
-                ].map((s, i) => (
-                  <div key={s.lbl} style={{ ...S.statBox, borderRight: i < 3 ? '1px solid #f0f0f0' : 'none' }}>
-                    <div style={{ fontSize: 9, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>{s.lbl}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>{s.val}</div>
-                  </div>
-                ))}
-              </div>
-
-              {mostrarEditorKB && (
-                <div style={{ marginTop: 14 }}>
-                  <textarea value={textoKB} onChange={e => setTextoKB(e.target.value)} rows={12}
-                    style={{ ...S.inp, fontFamily: 'monospace', resize: 'vertical', lineHeight: 1.6, fontSize: 12 }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                    <span style={{ fontSize: 11, color: '#aaa' }}>{textoKB.split(/\s+/).filter(Boolean).length} palabras</span>
-                    <button onClick={async () => { setSaving(s => ({ ...s, kb: true })); await fetch('/api/knowledge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId: id, contentMd: textoKB }) }); setSaving(s => ({ ...s, kb: false })); setMostrarEditorKB(false); cargar() }} style={S.btn(themeColor)}>
-                      {saving.kb ? 'Guardando...' : 'Guardar KB'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Auto-recrawl */}
-            <div style={S.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <div>
-                  <div style={S.secLabel}>Re-crawl automático</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>El sistema actualiza la knowledge base automáticamente cada X días</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {kb?.last_scraped_at && (
-                    <span style={{ fontSize: 11, color: '#aaa' }}>
-                      Último: {new Date(kb.last_scraped_at).toLocaleDateString('es-ES')}
-                      {' · Próximo: '}
-                      {new Date(new Date(kb.last_scraped_at).getTime() + recrawlDays * 86400000).toLocaleDateString('es-ES')}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={S.lbl}>Cada cuántos días</label>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-                    <input type="range" min="1" max="30" step="1" value={recrawlDays}
-                      onChange={e => setRecrawlDays(parseInt(e.target.value))}
-                      style={{ flex: 1, accentColor: themeColor }} />
-                    <div style={{ minWidth: 52, textAlign: 'center', background: themeColor + '12', border: '1px solid ' + themeColor + '30', borderRadius: 8, padding: '4px 10px', fontSize: 14, fontWeight: 700, color: themeColor }}>
-                      {recrawlDays}d
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#aaa', marginTop: 4 }}>
-                    <span>Cada día</span>
-                    <span>Cada 15 días</span>
-                    <span>Cada mes</span>
-                  </div>
-                </div>
-              </div>
-              {/* Atajos rápidos */}
-              <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-                {[{ v: 3, l: 'Cada 3 días' }, { v: 7, l: 'Semanal' }, { v: 10, l: 'Cada 10 días' }, { v: 15, l: 'Quincenal' }, { v: 30, l: 'Mensual' }].map(opt => (
-                  <button key={opt.v} onClick={() => setRecrawlDays(opt.v)}
-                    style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: recrawlDays === opt.v ? 700 : 400, border: '1px solid ' + (recrawlDays === opt.v ? themeColor : '#e2e8f0'), background: recrawlDays === opt.v ? themeColor + '12' : 'white', color: recrawlDays === opt.v ? themeColor : '#555', cursor: 'pointer' }}>
-                    {opt.l}
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14 }}>
-                <button onClick={() => guardar('recrawl', { recrawl_days: recrawlDays })} style={S.btn(themeColor)}>
-                  {saving.recrawl ? 'Guardando...' : 'Guardar frecuencia'}
-                </button>
-                {saved.recrawl && <span style={{ fontSize: 12, color: '#22c55e' }}>{saved.recrawl}</span>}
-              </div>
-            </div>
-
-            <div style={S.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div>
-                  <div style={S.secLabel}>URLs adicionales</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>Páginas extra que se scrapearan y añadirán a la KB automáticamente</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                <input type="url" value={nuevaUrl} onChange={e => setNuevaUrl(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addUrl()}
-                  placeholder="https://ejemplo.com/pagina-especifica"
-                  style={{ ...S.inp, flex: 1, width: 'auto' }} />
-                <button onClick={addUrl} disabled={addingUrl || !nuevaUrl.trim()} style={S.btn(themeColor)}>
-                  {addingUrl ? '⏳' : '+ Añadir'}
-                </button>
-              </div>
-
-              {kbSources.filter(s => s.type === 'url').length > 0 && (
-                <div style={{ display: 'grid', gap: 6 }}>
-                  {kbSources.filter(s => s.type === 'url').map(src => (
-                    <div key={src.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8 }}>
-                      <span style={{ fontSize: 15 }}>🌐</span>
-                      <a href={src.url} target="_blank" rel="noreferrer" style={{ flex: 1, fontSize: 12, color: '#4B7BE5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src.url}</a>
-                      {src.words_count > 0 && <span style={S.tag('#f0fdf4', '#059669')}>{src.words_count.toLocaleString()} palabras</span>}
-                      <span style={S.tag(src.status === 'ok' ? '#f0fdf4' : src.status === 'error' ? '#fef2f2' : '#fefce8', src.status === 'ok' ? '#059669' : src.status === 'error' ? '#ef4444' : '#854d0e')}>
-                        {src.status === 'ok' ? '✓' : src.status === 'error' ? '✗' : '⏳'}
-                      </span>
-                      <button onClick={() => eliminarSource(src.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: 16, padding: 0 }}>✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {kbSources.filter(s => s.type === 'url').length === 0 && (
-                <div style={{ textAlign: 'center', padding: '20px 0', color: '#aaa', fontSize: 12 }}>Sin URLs adicionales</div>
-              )}
-            </div>
-            <div
-              style={{
-                ...S.card,
-                border: isDragOver ? `2px dashed ${themeColor}` : '1px solid #e8e8e8',
-                background: isDragOver ? `${themeColor}06` : 'white',
-                transition: 'border 0.15s, background 0.15s',
-                position: 'relative',
-              }}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              {/* Overlay visible cuando se arrastra un archivo */}
-              {isDragOver && (
-                <div style={{
-                  position: 'absolute', inset: 0, borderRadius: 10, zIndex: 10,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  background: `${themeColor}0d`, pointerEvents: 'none',
-                }}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>📂</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: themeColor }}>Suelta aquí para subir</div>
-                  <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>PDF, Word o TXT</div>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div>
-                  <div style={S.secLabel}>Documentos</div>
-                  <div style={{ fontSize: 12, color: '#888' }}>PDF, Word y TXT que enriquecen la knowledge base · arrastra archivos aquí</div>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {fileTypes.map(ft => (
-                    <button key={ft.ext}
-                      onClick={() => {
-                        if (fileInputRef.current) {
-                          fileInputRef.current.accept = ft.ext
-                          fileInputRef.current.click()
-                        }
-                      }}
-                      disabled={uploadingFile}
-                      style={{ ...S.btn('white', '#555'), display: 'flex', alignItems: 'center', gap: 5 }}>
-                      {ft.icon} {ft.label}
-                    </button>
-                  ))}
-                  <input ref={fileInputRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }}
-                    onChange={e => { if (e.target.files?.[0]) uploadKBFile(e.target.files[0]) }} />
-                </div>
-              </div>
-              {kbSources.filter(s => s.type !== 'url').length > 0 ? (
-                <div style={{ display: 'grid', gap: 6 }}>
-                  {kbSources.filter(s => s.type !== 'url').map(src => {
-                    const ext = src.filename?.split('.').pop()?.toLowerCase() || ''
-                    const icon = ext === 'pdf' ? '📄' : ext === 'docx' || ext === 'doc' ? '📝' : '📃'
-                    const size = src.words_count > 0 ? `${src.words_count.toLocaleString()} palabras` : ''
-                    return (
-                      <div key={src.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8 }}>
-                        <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src.filename}</div>
-                          {size && <div style={{ fontSize: 10, color: '#aaa' }}>{size}</div>}
-                        </div>
-                        <span style={S.tag(src.status === 'ok' ? '#f0fdf4' : src.status === 'error' ? '#fef2f2' : '#fefce8', src.status === 'ok' ? '#059669' : src.status === 'error' ? '#ef4444' : '#854d0e')}>
-                          {src.status === 'ok' ? '✓ Procesado' : src.status === 'error' ? '✗ Error' : '⏳ Procesando'}
-                        </span>
-                        <button onClick={() => eliminarSource(src.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ddd', fontSize: 16, padding: 0 }}>✕</button>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '28px 0', color: '#aaa', fontSize: 12 }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>📎</div>
-                  Sin documentos. Sube PDFs, Word o TXT — o arrástralos aquí directamente.
-                </div>
-              )}
-
-              {uploadingFile && (
-                <div style={{ marginTop: 10, padding: '10px 14px', background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, fontSize: 12, color: '#854d0e' }}>
-                  ⏳ Subiendo y procesando el documento...
-                </div>
-              )}
-            </div>
-          </div>
+          <TabKnowledgeBase
+            cliente={cliente} kb={kb} kbSources={kbSources}
+            textoKB={textoKB} setTextoKB={setTextoKB}
+            mostrarEditorKB={mostrarEditorKB} setMostrarEditorKB={setMostrarEditorKB}
+            scraping={scraping} msgScraping={msgScraping}
+            recrawlDays={recrawlDays} setRecrawlDays={setRecrawlDays}
+            nuevaUrl={nuevaUrl} setNuevaUrl={setNuevaUrl}
+            addingUrl={addingUrl} addUrl={addUrl}
+            uploadingFile={uploadingFile} uploadKBFile={uploadKBFile}
+            eliminarSource={eliminarSource}
+            isDragOver={isDragOver}
+            handleDragEnter={handleDragEnter} handleDragLeave={handleDragLeave}
+            handleDragOver={handleDragOver} handleDrop={handleDrop}
+            lanzarScraping={lanzarScraping}
+            guardar={guardar} saving={saving} saved={saved}
+            themeColor={themeColor} id={id} cargar={cargar} cargarSources={cargarSources}
+          />
         )}
 
         {/* --- CHAT ------------------------------------------------------ */}
         {tab === 'Chat' && (
-          <div style={{ display: 'grid', gap: 14 }}>
-            <div style={S.card}>
-              <div style={S.secLabel}>Instrucciones del chatbot</div>
-              <textarea value={formChat.system_prompt} onChange={e => setFormChat({ ...formChat, system_prompt: e.target.value })} rows={8}
-                placeholder={`Eres el asistente de ${cliente.name}.\n\nTONO: Amable y profesional.\n\nPUEDES:\n- Informar sobre precios y servicios\n\nNO PUEDES:\n- Inventar información`}
-                style={{ ...S.inp, fontFamily: 'system-ui', resize: 'vertical', lineHeight: 1.7 }} />
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button onClick={() => setFormChat({ ...formChat, system_prompt: `Eres el asistente virtual de ${cliente.name}.\n\nTONO: Amable, cercano y profesional.\nIDIOMA: Responde en el idioma del usuario.\n\nPUEDES:\n- Informar sobre precios y servicios\n- Dar horarios y datos de contacto\n\nNO PUEDES:\n- Inventar información\n- Hablar de competidores` })} style={S.btn('white', '#555')}>📋 Plantilla</button>
-                <button onClick={() => setFormChat({ ...formChat, system_prompt: '' })} style={{ ...S.btn('white', '#ef4444') }}>Limpiar</button>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+
+            {/* Columna izquierda — Reglas Maestras formato A4 */}
+            <div style={{ flex: '0 0 auto', width: 'min(500px, 55%)' }}>
+              <div style={S.card}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={S.secLabel}>Reglas Maestras</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => setFormChat({ ...formChat, system_prompt: `Eres el asistente virtual de ${cliente.name}.\n\nTONO: Amable, cercano y profesional.\nIDIOMA: Responde en el idioma del usuario.\n\nPUEDES:\n- Informar sobre precios y servicios\n- Dar horarios y datos de contacto\n\nNO PUEDES:\n- Inventar información\n- Hablar de competidores` })} style={{ ...S.btn('white', '#555'), fontSize: 11, padding: '4px 10px' }}>📋 Plantilla</button>
+                    <button onClick={() => setFormChat({ ...formChat, system_prompt: '' })} style={{ ...S.btn('white', '#ef4444'), fontSize: 11, padding: '4px 10px' }}>Limpiar</button>
+                  </div>
+                </div>
+                <textarea value={formChat.system_prompt} onChange={e => setFormChat({ ...formChat, system_prompt: e.target.value })}
+                  placeholder={`Eres el asistente de ${cliente.name}.\n\nTONO: Amable y profesional.\n\nPUEDES:\n- Informar sobre precios y servicios\n\nNO PUEDES:\n- Inventar información`}
+                  style={{ ...S.inp, fontFamily: 'system-ui', resize: 'vertical', lineHeight: 1.7, width: '100%', aspectRatio: '1 / 1.4142', minHeight: 400, boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 10 }}>
+                <button onClick={() => guardar('chat', { system_prompt: formChat.system_prompt, temperature: formChat.temperature, auto_language: formChat.auto_language, report_emails: formChat.report_emails, report_frequency: formChat.report_frequency, ai_model: formChat.ai_model })} style={S.btn(themeColor)}>
+                  {saving.chat ? tr('saving') : tr('save')}
+                </button>
+                {saved.chat && <span style={{ fontSize: 12, color: '#22c55e' }}>{saved.chat}</span>}
               </div>
             </div>
-            <div style={S.g2}>
-              <div style={S.card}>
-                <div style={S.secLabel}>{tr('temperature')}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#aaa', marginBottom: 6 }}><span>{tr('temperature_formal')}</span><span>{tr('temperature_creative')}</span></div>
-                <input type="range" min="0" max="1" step="0.1" value={formChat.temperature} onChange={e => setFormChat({ ...formChat, temperature: parseFloat(e.target.value) })} style={{ width: '100%', accentColor: themeColor, marginBottom: 8 }} />
+
+            {/* Columna derecha — configuración compacta */}
+            <div style={{ flex: 1, display: 'grid', gap: 10 }}>
+
+              {/* Temperatura */}
+              <div style={{ ...S.card, padding: '12px 14px' }}>
+                <div style={{ ...S.secLabel, fontSize: 11, marginBottom: 6 }}>{tr('temperature')}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#aaa', marginBottom: 4 }}><span>{tr('temperature_formal')}</span><span>{tr('temperature_creative')}</span></div>
+                <input type="range" min="0" max="1" step="0.1" value={formChat.temperature} onChange={e => setFormChat({ ...formChat, temperature: parseFloat(e.target.value) })} style={{ width: '100%', accentColor: themeColor, marginBottom: 4 }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: '#888' }}>{formChat.temperature <= 0.3 ? tr('temperature_formal') : formChat.temperature <= 0.7 ? 'Equilibrado' : tr('temperature_creative')}</span>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: themeColor }}>{formChat.temperature.toFixed(1)}</span>
+                  <span style={{ fontSize: 10, color: '#888' }}>{formChat.temperature <= 0.3 ? tr('temperature_formal') : formChat.temperature <= 0.7 ? 'Equilibrado' : tr('temperature_creative')}</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: themeColor }}>{formChat.temperature.toFixed(1)}</span>
                 </div>
               </div>
-              <div style={S.card}>
-                <div style={S.secLabel}>{tr('ai_model')}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+
+              {/* Modelo IA — solo Haiku y Sonnet */}
+              <div style={{ ...S.card, padding: '12px 14px' }}>
+                <div style={{ ...S.secLabel, fontSize: 11, marginBottom: 8 }}>{tr('ai_model')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
                   {([
                     { id: 'claude-haiku-4-5-20251001', labelKey: 'model_haiku', descKey: 'model_haiku_desc', creditos: 1, color: '#059669', badge: tr('recommended') },
                     { id: 'claude-sonnet-4-5', labelKey: 'model_sonnet', descKey: 'model_sonnet_desc', creditos: 4, color: '#4B7BE5', badge: '' },
-                    { id: 'claude-opus-4-5', labelKey: 'model_opus', descKey: 'model_opus_desc', creditos: 20, color: '#7c3aed', badge: tr('premium') },
                   ] as const).map(m => {
                     const active = formChat.ai_model === m.id
-                    // Mensajes reales que da este modelo con el plan del cliente
                     const planCreditos = PLAN_CREDITOS[cliente.plan] || 500
                     const msgsDisponibles = Math.floor(planCreditos / m.creditos)
                     return (
                       <div key={m.id} onClick={() => setFormChat({ ...formChat, ai_model: m.id })}
-                        style={{ border: `2px solid ${active ? m.color : '#e5e7eb'}`, borderRadius: 10, padding: '12px 14px', cursor: 'pointer', background: active ? `${m.color}08` : 'white', transition: 'all 0.15s' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 5 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: active ? m.color : '#111' }}>{tr(m.labelKey as any)}</span>
-                          {m.badge && <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: `${m.color}18`, color: m.color, fontWeight: 700 }}>{m.badge}</span>}
+                        style={{ border: `2px solid ${active ? m.color : '#e5e7eb'}`, borderRadius: 9, padding: '8px 10px', cursor: 'pointer', background: active ? `${m.color}08` : 'white', transition: 'all 0.15s' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 3 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: active ? m.color : '#111' }}>{tr(m.labelKey as any)}</span>
+                          {m.badge && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: `${m.color}18`, color: m.color, fontWeight: 700 }}>{m.badge}</span>}
                         </div>
-                        <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>{tr(m.descKey as any)}</div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: m.color, background: `${m.color}10`, borderRadius: 5, padding: '3px 7px', textAlign: 'center', marginBottom: 6 }}>
+                        <div style={{ fontSize: 10, color: '#888', marginBottom: 5 }}>{tr(m.descKey as any)}</div>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: m.color, background: `${m.color}10`, borderRadius: 5, padding: '2px 6px', textAlign: 'center', marginBottom: 4 }}>
                           {m.creditos} {m.creditos === 1 ? tr('credits_per_msg') : tr('credits_per_msg_plural')}
                         </div>
-                        <div style={{ background: '#f8fafc', border: '1px solid #f0f0f0', borderRadius: 6, padding: '5px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: 10, color: '#aaa', marginBottom: 1 }}>Con tu plan {cliente.plan}</div>
-                          <div style={{ fontSize: 15, fontWeight: 700, color: m.color }}>{msgsDisponibles.toLocaleString('es-ES')}</div>
-                          <div style={{ fontSize: 10, color: '#888' }}>mensajes/mes</div>
+                        <div style={{ background: '#f8fafc', border: '1px solid #f0f0f0', borderRadius: 6, padding: '4px 6px', textAlign: 'center' }}>
+                          <div style={{ fontSize: 9, color: '#aaa', marginBottom: 1 }}>Plan {cliente.plan}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: m.color }}>{msgsDisponibles.toLocaleString('es-ES')}</div>
+                          <div style={{ fontSize: 9, color: '#888' }}>msgs/mes</div>
                         </div>
                         {m.creditos > 1 && active && (
-                          <div style={{ marginTop: 6, fontSize: 10, color: '#f59e0b', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 5, padding: '3px 7px', textAlign: 'center' }}>
+                          <div style={{ marginTop: 4, fontSize: 9, color: '#f59e0b', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 5, padding: '2px 6px', textAlign: 'center' }}>
                             ⚠️ {tr('model_warning' as any, { n: m.creditos })}
                           </div>
                         )}
@@ -1234,83 +1073,61 @@ export default function ClienteDetallePage() {
                   })}
                 </div>
               </div>
-              <div style={S.card}>
-                <div style={S.secLabel}>{tr('auto_language')}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8 }}>
-                  <div><div style={{ fontSize: 13, fontWeight: 500, color: '#111' }}>{tr('auto_language')}</div><div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>{tr('auto_language_desc')}</div></div>
+
+              {/* Idioma automático */}
+              <div style={{ ...S.card, padding: '10px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: '#111' }}>{tr('auto_language')}</div>
+                    <div style={{ fontSize: 10, color: '#aaa', marginTop: 1 }}>{tr('auto_language_desc')}</div>
+                  </div>
                   <div style={S.tgl(formChat.auto_language, themeColor)} onClick={() => setFormChat({ ...formChat, auto_language: !formChat.auto_language })}><div style={S.tglK(formChat.auto_language)} /></div>
                 </div>
               </div>
-            </div>
-            <div style={S.card}>
-              <div style={S.secLabel}>{tr('daily_email')}</div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={S.lbl}>Emails que reciben el informe</label>
-                {/* Chips de emails añadidos */}
-                {formChat.report_emails.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                    {formChat.report_emails.map((em, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, background: `${themeColor}12`, border: `1px solid ${themeColor}30`, borderRadius: 20, padding: '4px 10px', fontSize: 12 }}>
-                        <span style={{ color: themeColor }}>✉️ {em}</span>
-                        <button onClick={() => setFormChat({ ...formChat, report_emails: formChat.report_emails.filter((_, j) => j !== i) })}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+
+              {/* Emails de informe */}
+              <div style={{ ...S.card, padding: '12px 14px' }}>
+                <div style={{ ...S.secLabel, fontSize: 11, marginBottom: 8 }}>{tr('daily_email')}</div>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ ...S.lbl, fontSize: 11 }}>Emails que reciben el informe</label>
+                  {formChat.report_emails.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+                      {formChat.report_emails.map((em, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, background: `${themeColor}12`, border: `1px solid ${themeColor}30`, borderRadius: 20, padding: '3px 8px', fontSize: 11 }}>
+                          <span style={{ color: themeColor }}>✉️ {em}</span>
+                          <button onClick={() => setFormChat({ ...formChat, report_emails: formChat.report_emails.filter((_, j) => j !== i) })}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input type="email" value={nuevoEmail} onChange={e => setNuevoEmail(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && nuevoEmail.trim() && nuevoEmail.includes('@')) { setFormChat({ ...formChat, report_emails: [...formChat.report_emails, nuevoEmail.trim()] }); setNuevoEmail('') } }}
+                      placeholder="email@negocio.com → Enter"
+                      style={{ ...S.inp, flex: 1, width: 'auto', fontSize: 12, padding: '6px 10px' }} />
+                    <button onClick={() => { if (nuevoEmail.trim() && nuevoEmail.includes('@')) { setFormChat({ ...formChat, report_emails: [...formChat.report_emails, nuevoEmail.trim()] }); setNuevoEmail('') } }}
+                      style={{ ...S.btn(themeColor), fontSize: 12, padding: '6px 12px' }}>+</button>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ ...S.lbl, fontSize: 11 }}>Frecuencia</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                    {([
+                      { v: 'daily',   l: '📅 Diario',  d: 'Cada día' },
+                      { v: 'weekly',  l: '📆 Semanal', d: 'Los lunes' },
+                      { v: 'monthly', l: '🗓 Mensual', d: 'Día 1' },
+                    ] as const).map(opt => (
+                      <div key={opt.v} onClick={() => setFormChat({ ...formChat, report_frequency: opt.v })}
+                        style={{ padding: '7px 6px', borderRadius: 8, cursor: 'pointer', textAlign: 'center', border: `1.5px solid ${formChat.report_frequency === opt.v ? themeColor : '#e5e7eb'}`, background: formChat.report_frequency === opt.v ? `${themeColor}0e` : 'white' }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: formChat.report_frequency === opt.v ? themeColor : '#111' }}>{opt.l}</div>
+                        <div style={{ fontSize: 9, color: '#aaa', marginTop: 1 }}>{opt.d}</div>
                       </div>
                     ))}
                   </div>
-                )}
-                {/* Input para añadir nuevo email */}
-                <div style={{ display: 'flex', gap: 7 }}>
-                  <input
-                    type="email"
-                    value={nuevoEmail}
-                    onChange={e => setNuevoEmail(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && nuevoEmail.trim() && nuevoEmail.includes('@')) {
-                        setFormChat({ ...formChat, report_emails: [...formChat.report_emails, nuevoEmail.trim()] })
-                        setNuevoEmail('')
-                      }
-                    }}
-                    placeholder="email@negocio.com  →  Enter para añadir"
-                    style={{ ...S.inp, flex: 1, width: 'auto' }}
-                  />
-                  <button
-                    onClick={() => {
-                      if (nuevoEmail.trim() && nuevoEmail.includes('@')) {
-                        setFormChat({ ...formChat, report_emails: [...formChat.report_emails, nuevoEmail.trim()] })
-                        setNuevoEmail('')
-                      }
-                    }}
-                    style={S.btn(themeColor)}>+ Añadir</button>
-                </div>
-                <div style={{ fontSize: 10, color: '#aaa', marginTop: 5 }}>Puedes añadir hasta 5 destinatarios</div>
-              </div>
-              <div>
-                <label style={S.lbl}>Frecuencia del informe</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                  {([
-                    { v: 'daily',   l: '📅 Diario',  d: 'Cada día' },
-                    { v: 'weekly',  l: '📆 Semanal', d: 'Los lunes' },
-                    { v: 'monthly', l: '🗓 Mensual', d: 'Día 1 de cada mes' },
-                  ] as const).map(opt => (
-                    <div key={opt.v}
-                      onClick={() => setFormChat({ ...formChat, report_frequency: opt.v })}
-                      style={{
-                        padding: '10px 8px', borderRadius: 9, cursor: 'pointer', textAlign: 'center',
-                        border: `1.5px solid ${formChat.report_frequency === opt.v ? themeColor : '#e5e7eb'}`,
-                        background: formChat.report_frequency === opt.v ? `${themeColor}0e` : 'white',
-                      }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: formChat.report_frequency === opt.v ? themeColor : '#111' }}>{opt.l}</div>
-                      <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>{opt.d}</div>
-                    </div>
-                  ))}
                 </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              <button onClick={() => guardar('chat', { system_prompt: formChat.system_prompt, temperature: formChat.temperature, auto_language: formChat.auto_language, report_emails: formChat.report_emails, report_frequency: formChat.report_frequency, ai_model: formChat.ai_model })} style={S.btn(themeColor)}>
-                {saving.chat ? tr('saving') : tr('save')}
-              </button>
-              {saved.chat && <span style={{ fontSize: 12, color: '#22c55e' }}>{saved.chat}</span>}
+
             </div>
           </div>
         )}
@@ -1473,7 +1290,7 @@ export default function ClienteDetallePage() {
                     <div style={{ width: 26, height: 26, borderRadius: '50%', background: widgetForm.widget_color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12 }}>↑</div>
                   </div>
                   {/* Powered by */}
-                  <div style={{ textAlign: 'center', padding: '6px 0 8px', fontSize: 12, color: '#94a3b8' }}>
+                  <div style={{ textAlign: 'center', padding: '6px 0 8px', fontSize: 12, color: widgetForm.widget_theme === 'dark' ? '#94a3b8' : '#64748b' }}>
                     Powered by <a href="https://chathost.ai" target="_blank" rel="noreferrer" style={{ color: themeColor, fontWeight: 600, textDecoration: 'none' }}>ChatHost</a>
                   </div>
                 </div>
@@ -1487,245 +1304,27 @@ export default function ClienteDetallePage() {
 
         {/* --- ACTIVITY -------------------------------------------------- */}
         {tab === 'Activity' && (
-          <div style={{ display: 'flex', gap: 0, height: 'calc(100vh - 130px)', background: 'white', border: '1px solid #e8e8e8', borderRadius: 10, overflow: 'hidden' }}>
-
-            {/* -- COLUMNA IZQUIERDA — lista -- */}
-            <div style={{ width: 360, flexShrink: 0, borderRight: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column' }}>
-
-              {/* Cabecera */}
-              <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid #f5f5f5' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#111' }}>Chat logs</span>
-                  {/* Botón PDF — amarillo, directo sin menú */}
-                  <button
-                    onClick={exportPDF}
-                    title="Exportar PDF"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 7, border: 'none', background: '#f59e0b', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'white' }}>
-                    <span style={{ fontSize: 14 }}>📄</span> Exportar PDF
-                  </button>
-                </div>
-
-                {/* Filtro de periodo — 3 botones */}
-                <div style={{ display: 'flex', gap: 5, marginBottom: 8 }}>
-                  {([
-                    { v: 'day',   l: 'Hoy' },
-                    { v: 'week',  l: 'Esta semana' },
-                    { v: 'month', l: 'Este mes' },
-                  ] as const).map(opt => (
-                    <button key={opt.v} onClick={() => setFiltroPeriodo(opt.v)}
-                      style={{
-                        flex: 1, padding: '6px 0', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                        border: '1.5px solid ' + (filtroPeriodo === opt.v ? themeColor : '#e5e7eb'),
-                        background: filtroPeriodo === opt.v ? themeColor : 'white',
-                        color: filtroPeriodo === opt.v ? 'white' : '#555',
-                        transition: 'all 0.12s',
-                      }}>
-                      {opt.l}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Filtro de score — botón que despliega panel inline */}
-                <div>
-                  <button onClick={() => setScorePanel(p => !p)}
-                    style={{
-                      width: '100%', padding: '7px 12px', borderRadius: 7, fontSize: 11, fontWeight: 600,
-                      border: '1.5px solid ' + (filtroScoreMax < 10 ? themeColor : '#e5e7eb'),
-                      background: filtroScoreMax < 10 ? themeColor + '0e' : 'white',
-                      color: filtroScoreMax < 10 ? themeColor : '#555',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      transition: 'all 0.12s',
-                    }}>
-                    <span>
-                      {filtroScoreMax < 10
-                        ? 'Chats con score hasta ' + filtroScoreMax.toFixed(1)
-                        : 'Filtrar por score de calidad'}
-                    </span>
-                    <span style={{ fontSize: 10, opacity: 0.6 }}>{scorePanel ? '▲' : '▼'}</span>
-                  </button>
-
-                  {scorePanel && (
-                    <div style={{ background: '#f8fafc', border: '1px solid #f0f0f0', borderRadius: 8, padding: '14px 14px 10px', marginTop: 6 }}>
-                      {/* Atajos rápidos */}
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Atajos rápidos</div>
-                      <div style={{ display: 'flex', gap: 5, marginBottom: 12 }}>
-                        {[
-                          { v: 3,  l: 'Problemáticos', sub: 'hasta 3' },
-                          { v: 5,  l: 'Revisar',        sub: 'hasta 5' },
-                          { v: 10, l: 'Todos',          sub: '' },
-                        ].map(opt => (
-                          <button key={opt.v} onClick={() => setFiltroScoreMax(opt.v)}
-                            style={{
-                              flex: 1, padding: '7px 4px', borderRadius: 7, cursor: 'pointer', textAlign: 'center',
-                              border: '1.5px solid ' + (filtroScoreMax === opt.v ? themeColor : '#e5e7eb'),
-                              background: filtroScoreMax === opt.v ? themeColor + '12' : 'white',
-                            }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: filtroScoreMax === opt.v ? themeColor : '#111' }}>{opt.l}</div>
-                            {opt.sub && <div style={{ fontSize: 9, color: '#aaa', marginTop: 1 }}>{opt.sub}</div>}
-                          </button>
-                        ))}
-                      </div>
-                      {/* Slider fino */}
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Personalizado</div>
-                      <input type="range" min="0" max="10" step="0.5" value={filtroScoreMax}
-                        onChange={e => setFiltroScoreMax(parseFloat(e.target.value))}
-                        style={{ width: '100%', accentColor: themeColor, marginBottom: 4 }} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#aaa' }}>
-                        <span>Peor calidad (0)</span>
-                        <span style={{ fontWeight: 700, color: themeColor }}>Hasta {filtroScoreMax.toFixed(1)}</span>
-                        <span>Mejor calidad (10)</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Contador de resultados */}
-                <div style={{ marginTop: 8, fontSize: 11, color: '#aaa' }}>
-                  {convsFiltradas().length} conversaciones
-                  {(filtroScoreMax < 10) && <span style={{ color: themeColor, fontWeight: 600 }}> · score hasta {filtroScoreMax.toFixed(1)}</span>}
-                </div>
-              </div>
-
-              {/* Lista conversaciones filtradas */}
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                {convsFiltradas().length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: 40, color: '#aaa', fontSize: 13 }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>🔍</div>
-                    Sin conversaciones con estos filtros
-                  </div>
-                ) : (
-                  convsFiltradas().map(conv => {
-                    const sel = convSel === conv.id
-                    const dt = new Date(conv.started_at)
-                    const now = new Date()
-                    const diffDays = Math.floor((now.getTime() - dt.getTime()) / 86400000)
-                    const timeLabel = diffDays === 0 ? 'Hoy' : diffDays === 1 ? 'Ayer' : 'Hace ' + diffDays + ' días'
-                    // Color del score: rojo si bajo, amarillo si medio, verde si alto
-                    const scoreColor = conv.confidence_score <= 3 ? '#dc2626' : conv.confidence_score <= 6 ? '#d97706' : '#059669'
-                    return (
-                      <div key={conv.id} onClick={() => cargarMsgsConv(conv.id)}
-                        style={{ padding: '12px 14px', borderBottom: '1px solid #f5f5f5', cursor: 'pointer', background: sel ? themeColor + '08' : 'white', borderLeft: '3px solid ' + (sel ? themeColor : 'transparent'), transition: 'all 0.1s' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {/* Score badge */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: scoreColor + '12', borderRadius: 6, padding: '2px 7px', border: '1px solid ' + scoreColor + '30' }}>
-                              <span style={{ fontSize: 10 }}>📊</span>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor }}>{conv.confidence_score.toFixed(2)}</span>
-                            </div>
-                            {conv.language && <span style={{ fontSize: 10, color: '#aaa', background: '#f5f5f5', padding: '2px 5px', borderRadius: 4 }}>{conv.language.toUpperCase()}</span>}
-                          </div>
-                          <span style={{ fontSize: 10, color: '#aaa' }}>{timeLabel}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
-                          {conv.first_message
-                            ? conv.first_message.slice(0, 60) + (conv.first_message.length > 60 ? '…' : '')
-                            : conv.session_id.slice(0, 34)}
-                        </div>
-                        <div style={{ fontSize: 10, color: '#aaa' }}>{conv.message_count} mensajes · {dt.toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
-                      </div>
-                    )
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* -- COLUMNA DERECHA — detalle -- */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {!convSel ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#aaa', gap: 10 }}>
-                  <div style={{ fontSize: 36 }}>💬</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#555' }}>Selecciona una conversación</div>
-                  <div style={{ fontSize: 12 }}>Haz click en cualquier chat de la izquierda</div>
-                </div>
-              ) : (
-                <>
-                  {/* Header detalle conversación */}
-                  <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#111', marginBottom: 2 }}>Conversación</div>
-                      <div style={{ fontSize: 11, color: '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {(() => {
-                          const conv = conversations.find(c => c.id === convSel)
-                          return conv?.first_message
-                            ? conv.first_message.slice(0, 60) + (conv.first_message.length > 60 ? '…' : '')
-                            : conv?.session_id?.slice(0, 40)
-                        })()}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
-                      {(() => {
-                        const conv = conversations.find(c => c.id === convSel)
-                        if (!conv) return null
-                        const sc = conv.confidence_score
-                        const scColor = sc <= 3 ? '#dc2626' : sc <= 6 ? '#d97706' : '#059669'
-                        return (
-                          <>
-                            <span style={S.tag(scColor + '12', scColor)}>📊 {sc.toFixed(2)}</span>
-                            <span style={S.tag('#f5f5f5', '#888')}>{conv.message_count} msgs</span>
-                          </>
-                        )
-                      })()}
-                      <button onClick={() => { setConvSel(null); setMsgsConv([]) }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: 18, lineHeight: 1 }}>✕</button>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', padding: '0 20px', borderBottom: '1px solid #f0f0f0', background: 'white' }}>
-                    {['Chat', 'Details'].map(t => (
-                      <div key={t} style={{ padding: '10px 14px', fontSize: 12, fontWeight: 600, color: t === 'Chat' ? themeColor : '#aaa', borderBottom: '2px solid ' + (t === 'Chat' ? themeColor : 'transparent'), cursor: 'pointer' }}>{t}</div>
-                    ))}
-                  </div>
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12, background: '#fafafa' }}>
-                    {msgsConv.map((msg: any, i: number) => (
-                      <div key={msg.id || i}>
-                        {/* Etiqueta de rol */}
-                        <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, paddingLeft: msg.role === 'user' ? 0 : 4, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
-                          {msg.role === 'user' ? 'Visitante' : (cliente?.name || 'Asistente')}
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                          <div style={{
-                            background: msg.role === 'user' ? widgetForm.widget_color : 'white',
-                            color: msg.role === 'user' ? 'white' : '#374151',
-                            borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '4px 14px 14px 14px',
-                            padding: '12px 16px', maxWidth: '75%', fontSize: 13, lineHeight: 1.7,
-                            boxShadow: msg.role === 'assistant' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
-                          }}
-                            dangerouslySetInnerHTML={{
-                              __html: msg.role === 'assistant'
-                                // Renderizar markdown: bold, links, listas, saltos de línea
-                                ? (msg.content || '')
-                                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-                                    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" style="color:' + themeColor + ';text-decoration:underline;word-break:break-all">$1</a>')
-                                    .replace(/^- (.+)$/gm, '<li style="margin-left:16px;margin-bottom:2px">$1</li>')
-                                    .replace(/(<li[^>]*>.*<\/li>\n?)+/g, '<ul style="padding:0;margin:6px 0;list-style:none">$&</ul>')
-                                    .replace(/\n\n/g, '<br><br>')
-                                    .replace(/\n/g, '<br>')
-                                : (msg.content || '').replace(/\n/g, '<br>')
-                            }}
-                          />
-                        </div>
-                        {/* Footer del mensaje: timestamp + tokens */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start', paddingLeft: msg.role === 'user' ? 0 : 4 }}>
-                          {msg.created_at && (
-                            <span style={{ fontSize: 10, color: '#aaa' }}>
-                              {new Date(msg.created_at).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          )}
-                          {msg.role === 'assistant' && msg.tokens_used && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: '#f1f5f9', borderRadius: 5, padding: '2px 7px' }}>
-                              <span style={{ fontSize: 10 }}>☁️</span>
-                              <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>{msg.tokens_used} tokens</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <TabActivity
+            cliente={cliente} widgetForm={widgetForm}
+            conversations={conversations} convSel={convSel} msgsConv={msgsConv}
+            filtroPeriodo={filtroPeriodo} setFiltroPeriodo={setFiltroPeriodo}
+            filtroScoreMax={filtroScoreMax} setFiltroScoreMax={setFiltroScoreMax}
+            scorePanel={scorePanel} setScorePanel={setScorePanel}
+            convsFiltradas={convsFiltradas}
+            cargarMsgsConv={cargarMsgsConv} setConvSel={setConvSel}
+            setMsgsConv={setMsgsConv}
+            exportPDF={exportPDF} themeColor={themeColor}
+          />
         )}
-        {/* --- WIDGET ---------------------------------------------------- */}
+
+        {tab === 'Equipo' && (
+          <TabTeam cliente={cliente} themeColor={themeColor} tr={tr} />
+        )}
+
+        {tab === 'Billing' && (
+          <TabBilling cliente={cliente} themeColor={themeColor} tr={tr} />
+        )}
+
         {tab === 'Widget' && (
           <div style={S.g2}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1850,7 +1449,71 @@ export default function ClienteDetallePage() {
                 <div style={{ background: '#111', borderRadius: 8, padding: '12px 14px', fontFamily: 'monospace', fontSize: 11, color: '#94a3b8', wordBreak: 'break-all', lineHeight: 1.6 }}>{snippet}</div>
               </div>
 
-              {/* ---- SECCIÓN WIDGETS CONTEXTUALES ---- */}
+              {/* ---- SECCIÓN GDPR POR CLIENTE ---- */}
+              <div style={S.card}>
+                <div style={S.secLabel}>🔒 Privacidad y GDPR</div>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 14 }}>
+                  Aviso que aparece antes del primer mensaje. Si lo dejas vacío, usa el texto global de{' '}
+                  <a href="/admin/settings" style={{ color: themeColor }}>Configuración maestra</a>.
+                </div>
+
+                {/* Toggle texto personalizado */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5', marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#222' }}>Texto personalizado para este cliente</div>
+                    <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>Desactivado = usa el texto global de ChatHost</div>
+                  </div>
+                  <div
+                    onClick={() => setGdprForm(f => ({ ...f, useCustom: !f.useCustom }))}
+                    style={{ width: 40, height: 22, borderRadius: 11, background: gdprForm.useCustom ? themeColor : '#d1d5db', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                  >
+                    <span style={{ position: 'absolute', width: 16, height: 16, borderRadius: '50%', background: 'white', top: 3, left: gdprForm.useCustom ? 21 : 3, transition: 'left 0.15s' }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: 12, opacity: gdprForm.useCustom ? 1 : 0.4, pointerEvents: gdprForm.useCustom ? 'auto' : 'none' }}>
+                  <div>
+                    <label style={S.lbl}>Título del banner</label>
+                    <input value={gdprForm.gdpr_title} onChange={e => setGdprForm(f => ({ ...f, gdpr_title: e.target.value }))}
+                      placeholder="Antes de continuar" style={S.inp} />
+                  </div>
+                  <div>
+                    <label style={S.lbl}>Texto del aviso</label>
+                    <textarea value={gdprForm.gdpr_text} onChange={e => setGdprForm(f => ({ ...f, gdpr_text: e.target.value }))}
+                      rows={4} placeholder="Este chat usa inteligencia artificial para responder tus preguntas..."
+                      style={{ ...S.inp, resize: 'none', lineHeight: 1.5 }} />
+                  </div>
+                  <div>
+                    <label style={S.lbl}>URL política de privacidad del cliente</label>
+                    <input value={gdprForm.gdpr_privacy_url} onChange={e => setGdprForm(f => ({ ...f, gdpr_privacy_url: e.target.value }))}
+                      placeholder="https://mentalpadel.es/privacidad" style={S.inp} />
+                    <div style={{ fontSize: 11, color: '#bbb', marginTop: 4 }}>
+                      Déjalo vacío para usar{' '}
+                      <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: themeColor }}>chathost.ai/privacy</a>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={S.lbl}>Texto del botón de aceptar</label>
+                    <input value={gdprForm.gdpr_button_text} onChange={e => setGdprForm(f => ({ ...f, gdpr_button_text: e.target.value }))}
+                      placeholder="Entendido, continuar" style={S.inp} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14 }}>
+                  <button
+                    onClick={() => guardar('gdpr', {
+                      gdpr_title: gdprForm.useCustom && gdprForm.gdpr_title ? gdprForm.gdpr_title : null,
+                      gdpr_text: gdprForm.useCustom && gdprForm.gdpr_text ? gdprForm.gdpr_text : null,
+                      gdpr_button_text: gdprForm.useCustom && gdprForm.gdpr_button_text ? gdprForm.gdpr_button_text : null,
+                      gdpr_privacy_url: gdprForm.useCustom && gdprForm.gdpr_privacy_url ? gdprForm.gdpr_privacy_url : null,
+                    })}
+                    style={S.btn(themeColor)}
+                  >
+                    {saving.gdpr ? 'Guardando...' : 'Guardar privacidad'}
+                  </button>
+                  {saved.gdpr && <span style={{ fontSize: 12, color: '#22c55e' }}>{saved.gdpr}</span>}
+                </div>
+              </div>
               <div style={{ marginTop: 6 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, marginTop: 4 }}>Widgets del chat</div>
 
@@ -2054,6 +1717,7 @@ export default function ClienteDetallePage() {
                       widget_window_size: widgetForm.widget_window_size,
                       widget_logo_url: widgetForm.widget_logo_url || null,
                       widget_icon_url: widgetForm.widget_icon_url || null,
+                      widget_theme: widgetForm.widget_theme,
                     })
                     setWidgetDirty(false)
                   }}
@@ -2065,7 +1729,8 @@ export default function ClienteDetallePage() {
               </div>
               <div style={{ background: '#e8e8e8', borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: wSize.h + 80 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
-                  <div style={{ width: wSize.w, background: 'white', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.15)', border: '1px solid #f0f0f0' }}>
+                  {/* El fondo del widget cambia según el tema seleccionado */}
+                  <div style={{ width: wSize.w, background: widgetForm.widget_theme === 'dark' ? '#0f172a' : 'white', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.15)', border: `1px solid ${widgetForm.widget_theme === 'dark' ? '#334155' : '#f0f0f0'}` }}>
                     {/* Header */}
                     <div style={{ background: widgetForm.widget_color, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 9 }}>
                       <div style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.3)', flexShrink: 0, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2111,7 +1776,7 @@ export default function ClienteDetallePage() {
                     )}
 
                     {/* Mensajes */}
-                    <div style={{ padding: '12px', height: wSize.h - (widgetsForm.widget_weather_enabled ? 165 : 120) - (widgetsForm.widget_occupancy_enabled ? 30 : 0), overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ padding: '12px', height: wSize.h - (widgetsForm.widget_weather_enabled ? 165 : 120) - (widgetsForm.widget_occupancy_enabled ? 30 : 0), overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: widgetForm.widget_theme === 'dark' ? '#0f172a' : 'white' }}>
                       {/* Webcam — al inicio si está activa */}
                       {widgetsForm.widget_webcam_enabled && widgetsForm.widget_webcam_url && (() => {
                         const url = widgetsForm.widget_webcam_url
@@ -2131,14 +1796,19 @@ export default function ClienteDetallePage() {
                       })()}
                       {widgetPreviewMsgs.map((msg, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                          <div style={{ background: msg.role === 'user' ? widgetForm.widget_color : '#f5f5f5', color: msg.role === 'user' ? 'white' : '#374151', borderRadius: msg.role === 'user' ? '10px 10px 3px 10px' : '10px 10px 10px 3px', padding: '9px 12px', maxWidth: '80%', fontSize: 13, lineHeight: 1.5 }}>
+                          <div style={{
+                            background: msg.role === 'user' ? widgetForm.widget_color : (widgetForm.widget_theme === 'dark' ? '#1e293b' : '#f3f4f6'),
+                            color: msg.role === 'user' ? 'white' : (widgetForm.widget_theme === 'dark' ? '#cbd5e1' : '#374151'),
+                            borderRadius: msg.role === 'user' ? '10px 10px 3px 10px' : '10px 10px 10px 3px',
+                            padding: '9px 12px', maxWidth: '80%', fontSize: 13, lineHeight: 1.5,
+                          }}>
                             {msg.content}
                           </div>
                         </div>
                       ))}
                     </div>
                     {widgetForm.suggested_messages.length > 0 && (
-                      <div style={{ padding: '0 10px 8px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      <div style={{ padding: '0 10px 8px', display: 'flex', flexWrap: 'wrap', gap: 6, background: widgetForm.widget_theme === 'dark' ? '#0f172a' : 'white' }}>
                         {widgetForm.suggested_messages.slice(0, 3).map((s, i) => (
                           <div key={i} onClick={() => setWidgetPreviewMsgs(p => [...p, { role: 'user', content: s }, { role: 'assistant', content: 'Vista previa.' }])}
                             style={{ background: `${widgetForm.widget_color}15`, border: `1px solid ${widgetForm.widget_color}30`, color: widgetForm.widget_color, padding: '4px 10px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
@@ -2147,11 +1817,11 @@ export default function ClienteDetallePage() {
                         ))}
                       </div>
                     )}
-                    <div style={{ padding: '8px 10px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 6 }}>
+                    <div style={{ padding: '8px 10px', borderTop: `1px solid ${widgetForm.widget_theme === 'dark' ? '#334155' : '#f0f0f0'}`, display: 'flex', gap: 6, background: widgetForm.widget_theme === 'dark' ? '#1e293b' : 'white' }}>
                       <input value={widgetPreviewInput} onChange={e => setWidgetPreviewInput(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && widgetPreviewInput.trim()) { setWidgetPreviewMsgs(p => [...p, { role: 'user', content: widgetPreviewInput }, { role: 'assistant', content: 'Vista previa.' }]); setWidgetPreviewInput('') } }}
                         placeholder={widgetForm.widget_placeholder}
-                        style={{ flex: 1, padding: '7px 11px', border: '1px solid #e5e7eb', borderRadius: 18, fontSize: 13, color: '#111', outline: 'none' }} />
+                        style={{ flex: 1, padding: '7px 11px', border: `1px solid ${widgetForm.widget_theme === 'dark' ? '#334155' : '#e5e7eb'}`, borderRadius: 18, fontSize: 13, color: widgetForm.widget_theme === 'dark' ? '#f1f5f9' : '#111', background: widgetForm.widget_theme === 'dark' ? '#0f172a' : 'white', outline: 'none' }} />
                       <button onClick={() => { if (widgetPreviewInput.trim()) { setWidgetPreviewMsgs(p => [...p, { role: 'user', content: widgetPreviewInput }, { role: 'assistant', content: 'Vista previa.' }]); setWidgetPreviewInput('') } }}
                         style={{ width: 30, height: 30, borderRadius: '50%', background: widgetForm.widget_color, border: 'none', color: 'white', cursor: 'pointer', fontSize: 14 }}>↑</button>
                     </div>
@@ -2171,6 +1841,49 @@ export default function ClienteDetallePage() {
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8, padding: '8px 16px', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', textDecoration: 'none', fontSize: 12, fontWeight: 600, color: '#555' }}>
                 🔗 Abrir widget real en nueva pestaña
               </a>
+
+              {/* ---- SELECTOR DE TEMA — debajo del preview ---- */}
+              <div style={{ marginTop: 14, background: 'white', border: '1px solid #e2e8f0', borderRadius: 14, padding: '16px 18px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>🎨 Tema del widget</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                  {([
+                    { v: 'light', l: '☀️ Claro', bg: '#ffffff', msgBg: '#f3f4f6', inputBg: '#ffffff', border: '#e5e7eb' },
+                    { v: 'dark',  l: '🌙 Oscuro', bg: '#0f172a', msgBg: '#1e293b', inputBg: '#0f172a', border: '#334155' },
+                  ] as const).map(opt => {
+                    const active = widgetForm.widget_theme === opt.v
+                    return (
+                      <div key={opt.v}
+                        onClick={() => setWF({ widget_theme: opt.v })}
+                        style={{ border: `2px solid ${active ? widgetForm.widget_color : '#e5e7eb'}`, borderRadius: 10, padding: 8, cursor: 'pointer', background: active ? `${widgetForm.widget_color}08` : 'white', transition: 'all 0.15s' }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: active ? widgetForm.widget_color : '#555', marginBottom: 8 }}>{opt.l}</div>
+                        {/* Mini preview reactivo */}
+                        <div style={{ background: opt.bg, border: `1px solid ${opt.border}`, borderRadius: 8, overflow: 'hidden' }}>
+                          {/* Header */}
+                          <div style={{ background: widgetForm.widget_color, padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', flexShrink: 0 }} />
+                            <div style={{ height: 4, width: 36, background: 'rgba(255,255,255,0.7)', borderRadius: 2 }} />
+                          </div>
+                          {/* Mensajes */}
+                          <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <div style={{ background: opt.msgBg, borderRadius: '8px 8px 8px 2px', padding: '5px 8px', maxWidth: '80%' }}>
+                              <div style={{ height: 3, width: 50, background: opt.v === 'dark' ? '#94a3b8' : '#9ca3af', borderRadius: 2, marginBottom: 2 }} />
+                              <div style={{ height: 3, width: 32, background: opt.v === 'dark' ? '#94a3b8' : '#9ca3af', borderRadius: 2, opacity: 0.6 }} />
+                            </div>
+                            <div style={{ background: widgetForm.widget_color, borderRadius: '8px 8px 2px 8px', padding: '5px 8px', maxWidth: '65%', alignSelf: 'flex-end' }}>
+                              <div style={{ height: 3, width: 38, background: 'rgba(255,255,255,0.8)', borderRadius: 2 }} />
+                            </div>
+                          </div>
+                          {/* Input */}
+                          <div style={{ padding: '5px 8px', borderTop: `1px solid ${opt.border}`, display: 'flex', gap: 5, alignItems: 'center', background: opt.inputBg }}>
+                            <div style={{ flex: 1, height: 18, background: opt.v === 'dark' ? '#1e293b' : '#f9fafb', border: `1px solid ${opt.border}`, borderRadius: 12 }} />
+                            <div style={{ width: 18, height: 18, borderRadius: '50%', background: widgetForm.widget_color, flexShrink: 0 }} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -2369,36 +2082,6 @@ export default function ClienteDetallePage() {
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={S.card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <div style={S.secLabel}>Instrucciones maestras</div>
-                  <button onClick={guardarPgMaster} disabled={pgMasterGuardando}
-                    style={{ ...S.btn(pgMasterGuardado ? '#22c55e' : themeColor), padding: '5px 12px', fontSize: 11 }}>
-                    {pgMasterGuardado ? '✓ Guardado' : pgMasterGuardando ? '...' : 'Guardar'}
-                  </button>
-                </div>
-                <div style={{ fontSize: 11, color: '#aaa', marginBottom: 12 }}>Cambios se aplican a todos los chatbots</div>
-
-                <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-                  {([['base', '💬 Base'], ['formato', '📐 Formato'], ['normas', '⚖️ Normas']] as const).map(([k, lbl]) => (
-                    <button key={k} onClick={() => setPgMasterTab(k)}
-                      style={{ padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: pgMasterTab === k ? 600 : 400, border: '1px solid', borderColor: pgMasterTab === k ? themeColor : '#e5e7eb', background: pgMasterTab === k ? `${themeColor}12` : 'transparent', color: pgMasterTab === k ? themeColor : '#888', cursor: 'pointer' }}>
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-
-                {pgMasterSettings ? (
-                  <>
-                    {pgMasterTab === 'base' && <textarea value={pgMasterSettings.master_prompt} onChange={e => setPgMasterSettings({ ...pgMasterSettings, master_prompt: e.target.value })} style={{ ...S.inp, fontFamily: 'ui-monospace,monospace', resize: 'vertical', minHeight: 160, fontSize: 11, lineHeight: 1.7 }} />}
-                    {pgMasterTab === 'formato' && <textarea value={pgMasterSettings.master_format} onChange={e => setPgMasterSettings({ ...pgMasterSettings, master_format: e.target.value })} style={{ ...S.inp, fontFamily: 'ui-monospace,monospace', resize: 'vertical', minHeight: 200, fontSize: 11, lineHeight: 1.7 }} />}
-                    {pgMasterTab === 'normas' && <textarea value={pgMasterSettings.master_rules} onChange={e => setPgMasterSettings({ ...pgMasterSettings, master_rules: e.target.value })} style={{ ...S.inp, fontFamily: 'ui-monospace,monospace', resize: 'vertical', minHeight: 180, fontSize: 11, lineHeight: 1.7 }} />}
-                  </>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: 24, color: '#aaa', fontSize: 12 }}>Cargando...</div>
-                )}
-              </div>
-
               <div style={S.card}>
                 <div style={S.secLabel}>Contexto del test</div>
                 <div style={{ display: 'grid', gap: 8, fontSize: 12 }}>

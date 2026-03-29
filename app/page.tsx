@@ -1,65 +1,231 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+interface ClienteResumen {
+  id: string
+  name: string
+  website_url: string
+  plan: string
+  active: boolean
+  widget_color: string
+  widget_icon_url: string
+  created_at: string
+  is_internal: boolean
+  billing_override: string | null
+  knowledge_bases: { scraping_status: string; pages_scraped: number; words_count: number }[]
+  client_costs: { month: string; messages_count: number; cost_eur: number }[]
+}
+
+const s = {
+  wrap: { minHeight: '100vh', background: '#f8f9fc', fontFamily: '-apple-system,BlinkMacSystemFont,system-ui,sans-serif' },
+  topbar: {
+    background: '#1e293b',
+    borderBottom: '1px solid #334155',
+    padding: '0 28px',
+    height: 56,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+  } as React.CSSProperties,
+  body: { padding: '24px 28px', maxWidth: 1200, margin: '0 auto' },
+  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 28 } as React.CSSProperties,
+  statBox: { background: 'white', border: '1px solid #eaecf0', borderRadius: 10, padding: '16px 20px' } as React.CSSProperties,
+  statLabel: { fontSize: 10, fontWeight: 700, color: '#98a2b3', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 },
+  statVal: { fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px' },
+  statSub: { fontSize: 10, color: '#d0d5dd', marginTop: 3 },
+  card: { background: 'white', border: '1px solid #eaecf0', borderRadius: 10, overflow: 'hidden', marginBottom: 20 } as React.CSSProperties,
+  table: { width: '100%', borderCollapse: 'collapse' as const },
+  th: { padding: '9px 16px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: '#98a2b3', textTransform: 'uppercase' as const, letterSpacing: '0.06em', background: '#f9fafb', borderBottom: '1px solid #f0f0f0' },
+  td: { padding: '14px 16px', fontSize: 13, borderBottom: '1px solid #f7f7f7' },
+}
+
+const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
+  starter:  { bg: '#f0fdf4', color: '#16a34a' },
+  basic:    { bg: '#f0fdf4', color: '#16a34a' },
+  pro:      { bg: '#eff6ff', color: '#2563eb' },
+  business: { bg: '#f5f3ff', color: '#7c3aed' },
+  agency:   { bg: '#fff7ed', color: '#ea580c' },
+  trial:    { bg: '#fefce8', color: '#ca8a04' },
+}
+
+function ClientRow({ c, mes }: { c: ClienteResumen; mes: string }) {
+  const kb = c.knowledge_bases?.[0]
+  const costes = c.client_costs?.find(x => x.month === mes)
+  const planStyle = PLAN_STYLE[c.plan] || { bg: '#f9fafb', color: '#6b7280' }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <tr style={{ background: 'white' }}>
+      <td style={s.td}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {c.widget_icon_url
+            ? <img src={c.widget_icon_url} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+            : <div style={{ width: 10, height: 10, borderRadius: '50%', background: c.widget_color, flexShrink: 0 }} />}
+          <div>
+            <div style={{ fontWeight: 600, color: '#101828', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+              {c.name}
+              {c.is_internal && <span style={{ fontSize: 9, fontWeight: 700, background: '#818cf8', color: 'white', padding: '1px 6px', borderRadius: 4 }}>INTERNO</span>}
+              {c.billing_override === 'free' && <span style={{ fontSize: 9, fontWeight: 700, background: '#22c55e', color: 'white', padding: '1px 6px', borderRadius: 4 }}>FREE</span>}
+              {c.billing_override === 'custom' && <span style={{ fontSize: 9, fontWeight: 700, background: '#f59e0b', color: 'white', padding: '1px 6px', borderRadius: 4 }}>CUSTOM</span>}
+            </div>
+            <div style={{ fontSize: 11, color: '#d0d5dd', marginTop: 1 }}>{c.website_url}</div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </td>
+      <td style={s.td}>
+        <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 20, fontWeight: 600, background: planStyle.bg, color: planStyle.color }}>
+          {c.plan}
+        </span>
+      </td>
+      <td style={s.td}>
+        {kb ? (
+          <span style={{ fontSize: 12, color: kb.scraping_status === 'ok' ? '#16a34a' : '#ef4444' }}>
+            {kb.scraping_status === 'ok' ? `${kb.pages_scraped} págs · ${kb.words_count?.toLocaleString()} palabras` : 'Error'}
+          </span>
+        ) : <span style={{ fontSize: 12, color: '#ddd' }}>—</span>}
+      </td>
+      <td style={{ ...s.td, color: '#4f46e5', fontWeight: 600 }}>{costes?.messages_count?.toLocaleString() || '0'}</td>
+      <td style={{ ...s.td, color: '#f59e0b', fontWeight: 500 }}>
+        {c.is_internal ? <span style={{ color: '#d0d5dd' }}>—</span> : `€${Number(costes?.cost_eur || 0).toFixed(4)}`}
+      </td>
+      <td style={s.td}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: c.active ? '#16a34a' : '#98a2b3' }}>
+          {c.active ? '● activo' : '○ inactivo'}
+        </span>
+      </td>
+      <td style={s.td}>
+        <Link href={`/admin/clients/${c.id}`} style={{ fontSize: 12, color: '#4f46e5', fontWeight: 500, textDecoration: 'none' }}>
+          Gestionar →
+        </Link>
+      </td>
+    </tr>
+  )
+}
+
+function ClientTable({ title, clients, mes, accent }: { title: string; clients: ClienteResumen[]; mes: string; accent: string }) {
+  if (clients.length === 0) return null
+  return (
+    <div style={s.card}>
+      <div style={{ padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', borderLeft: `3px solid ${accent}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#101828' }}>{title}</span>
+          <span style={{ fontSize: 11, color: '#98a2b3', background: '#f9fafb', border: '1px solid #eaecf0', borderRadius: 20, padding: '1px 8px' }}>{clients.length}</span>
         </div>
-      </main>
+      </div>
+      <table style={s.table}>
+        <thead>
+          <tr>
+            {['Cliente', 'Plan', 'Knowledge base', 'Mensajes mes', 'Coste mes', 'Estado', ''].map(h => (
+              <th key={h} style={s.th}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map(c => <ClientRow key={c.id} c={c} mes={mes} />)}
+        </tbody>
+      </table>
     </div>
-  );
+  )
+}
+
+export default function AdminPage() {
+  const [clientes, setClientes] = useState<ClienteResumen[]>([])
+  const [cargando, setCargando] = useState(true)
+  const [actualizado, setActualizado] = useState('')
+
+  useEffect(() => { cargar() }, [])
+
+  async function cargar() {
+    setCargando(true)
+    const res = await fetch('/api/clients')
+    const data = await res.json()
+    setClientes(data.clients || [])
+    setCargando(false)
+    setActualizado(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }))
+  }
+
+  const mes = new Date().toISOString().slice(0, 7)
+  const internos = clientes.filter(c => c.is_internal)
+  const externos = clientes.filter(c => !c.is_internal)
+
+  const totalMensajes = externos.reduce((a, c) => a + (c.client_costs?.find(x => x.month === mes)?.messages_count || 0), 0)
+  const totalCoste = externos.reduce((a, c) => a + Number(c.client_costs?.find(x => x.month === mes)?.cost_eur || 0), 0)
+  const activos = externos.filter(c => c.active).length
+
+  const PLAN_MRR: Record<string, number> = { starter: 19, pro: 49, business: 99, agency: 199 }
+  const mrr = externos.reduce((a, c) => a + (PLAN_MRR[c.plan] || 0), 0)
+  const margen = mrr > 0 ? Math.round(((mrr - totalCoste) / mrr) * 100) : 0
+
+  return (
+    <div style={s.wrap}>
+      {/* TOPBAR */}
+      <div style={s.topbar}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <Link href="/admin" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/logo.png" alt="ChatHost.ai" style={{ height: 28, width: 'auto' }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#64748b', background: '#0f172a', padding: '2px 8px', borderRadius: 4, letterSpacing: '0.06em' }}>ADMIN</span>
+          </Link>
+          <nav style={{ display: 'flex', gap: 4 }}>
+            <Link href="/admin" style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', padding: '5px 10px', borderRadius: 6, background: '#334155', textDecoration: 'none' }}>
+              Clientes
+            </Link>
+            <Link href="/admin/settings" style={{ fontSize: 12, fontWeight: 500, color: '#94a3b8', padding: '5px 10px', borderRadius: 6, textDecoration: 'none' }}>
+              ⚙️ Configuración
+            </Link>
+          </nav>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {actualizado && <span style={{ fontSize: 11, color: '#64748b' }}>Actualizado: {actualizado}</span>}
+          <button onClick={cargar} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #334155', background: '#0f172a', color: '#94a3b8', cursor: 'pointer' }}>
+            ↺ Refresh
+          </button>
+          <Link href="/admin/clients/new" style={{ background: '#2563eb', color: 'white', padding: '7px 16px', borderRadius: 8, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
+            + Nuevo cliente
+          </Link>
+        </div>
+      </div>
+
+      <div style={s.body}>
+        {/* STATS */}
+        <div style={s.statsGrid}>
+          {[
+            { label: 'Clientes activos', val: activos, color: '#16a34a', sub: `de ${externos.length} totales` },
+            { label: 'MRR estimado', val: `€${mrr}`, color: '#4f46e5', sub: 'ingresos este mes' },
+            { label: 'Coste API', val: `€${totalCoste.toFixed(3)}`, color: '#f59e0b', sub: 'Claude Haiku' },
+            { label: 'Mensajes mes', val: totalMensajes.toLocaleString(), color: '#7c3aed', sub: 'todos los clientes' },
+            { label: 'Margen', val: `${margen}%`, color: margen >= 75 ? '#16a34a' : '#ef4444', sub: mrr > 0 ? 'sobre MRR' : 'sin ingresos aún' },
+          ].map(st => (
+            <div key={st.label} style={s.statBox}>
+              <div style={s.statLabel}>{st.label}</div>
+              <div style={{ ...s.statVal, color: st.color }}>{st.val}</div>
+              <div style={s.statSub}>{st.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {cargando ? (
+          <div style={{ padding: 48, textAlign: 'center', color: '#98a2b3', fontSize: 13 }}>Cargando...</div>
+        ) : (
+          <>
+            <ClientTable title="🔮 Mis bots" clients={internos} mes={mes} accent="#818cf8" />
+            <ClientTable title="👥 Clientes" clients={externos} mes={mes} accent="#4f46e5" />
+            {clientes.length === 0 && (
+              <div style={{ ...s.card, padding: 56, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: '#98a2b3', marginBottom: 12 }}>No hay clientes todavía</div>
+                <Link href="/admin/clients/new" style={{ background: '#4f46e5', color: 'white', padding: '8px 18px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  Crear el primero
+                </Link>
+              </div>
+            )}
+          </>
+        )}
+
+        <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: '#d0d5dd' }}>
+          Panel privado ChatHost.ai
+        </div>
+      </div>
+    </div>
+  )
 }
