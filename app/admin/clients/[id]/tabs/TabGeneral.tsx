@@ -12,7 +12,7 @@ interface Props {
   saving: Record<string, boolean>
   saved: Record<string, string>
   themeColor: string
-  tr: (k: string) => string
+  tr: (k: string, params?: any) => string
 }
 
 export default function TabGeneral({ cliente, kb, costeMes, formGeneral, setFormGeneral, guardar, eliminarCliente, saving, saved, themeColor, tr }: Props) {

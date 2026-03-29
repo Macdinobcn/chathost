@@ -14,7 +14,7 @@ interface Member {
 interface Props {
   cliente: any
   themeColor: string
-  tr: (k: string) => string
+  tr: (k: string, params?: any) => string
 }
 
 const ROLE_LABELS: Record<string, { label: string; desc: string; color: string; bg: string }> = {

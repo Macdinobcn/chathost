@@ -7,7 +7,7 @@ import { S } from '@/lib/admin-styles'
 interface Props {
   cliente: any
   themeColor: string
-  tr: (k: string) => string
+  tr: (k: string, params?: any) => string
 }
 
 const PLANS = [
