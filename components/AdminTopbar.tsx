@@ -12,6 +12,8 @@ interface AdminTopbarProps {
   clienteColor?: string
   clienteIconUrl?: string
   widgetId?: string
+  // Si true, el logo enlaza a /dashboard (selector de bots) en vez de /admin
+  isClientView?: boolean
   // Acciones opcionales (lado derecho)
   actions?: React.ReactNode
 }
@@ -25,6 +27,7 @@ export default function AdminTopbar({
   clienteColor,
   clienteIconUrl,
   widgetId,
+  isClientView,
   actions,
 }: AdminTopbarProps) {
   return (
@@ -43,7 +46,7 @@ export default function AdminTopbar({
     }}>
       {/* Izquierda — logo + breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <Link href="/admin" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link href={isClientView ? '/dashboard' : '/admin'} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
           <img src="/logo.png" alt="ChatHost.ai" style={{ height: 28, width: 'auto' }} />
         </Link>
 

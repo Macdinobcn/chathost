@@ -835,6 +835,7 @@ export default function ClienteDetallePage() {
         clienteColor={widgetForm.widget_color}
         clienteIconUrl={widgetForm.widget_icon_url}
         widgetId={cliente.widget_id}
+        isClientView
         actions={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {/* Panel de tema */}
