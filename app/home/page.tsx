@@ -33,6 +33,31 @@ interface BotEntry {
 
 const ADMIN_EMAILS = ['alexcollspeyra@gmail.com', 'chathostapp@gmail.com']
 
+const THEMES = {
+  dark: {
+    bg: '#060914',
+    bgNav: 'rgba(6,9,20,0.9)',
+    bgCard: '#161b27',
+    bgInput: 'rgba(255,255,255,0.05)',
+    text: '#f1f5f9',
+    textMuted: '#94a3b8',
+    textDimmed: '#64748b',
+    border: 'rgba(255,255,255,0.1)',
+    borderLight: 'rgba(255,255,255,0.08)',
+  },
+  light: {
+    bg: '#f8fafc',
+    bgNav: 'rgba(248,250,252,0.95)',
+    bgCard: '#ffffff',
+    bgInput: 'rgba(15,23,42,0.05)',
+    text: '#0f172a',
+    textMuted: '#475569',
+    textDimmed: '#64748b',
+    border: 'rgba(15,23,42,0.1)',
+    borderLight: 'rgba(15,23,42,0.08)',
+  },
+}
+
 export default function HomePage() {
   const router = useRouter()
   const [bots, setBots] = useState<BotEntry[]>([])
@@ -41,6 +66,9 @@ export default function HomePage() {
   const [viewMode, setViewMode] = useState<'grande' | 'pequeño' | 'lista'>('grande')
   const [activeTab, setActiveTab] = useState('overview')
   const [showPlanModal, setShowPlanModal] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null)
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('')
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -83,21 +111,52 @@ export default function HomePage() {
   const planColor = PLAN_COLOR[plan] || '#6366f1'
   const nextBillingDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
 
+  const t = THEMES[theme]
+
   return (
-    <div style={{ minHeight: '100vh', background: '#060914', fontFamily: 'Outfit, -apple-system, sans-serif', color: '#f1f5f9' }}>
+    <div style={{ minHeight: '100vh', background: t.bg, fontFamily: 'Outfit, -apple-system, sans-serif', color: t.text, transition: 'background-color 0.3s' }}>
 
       {/* Nav */}
       <nav style={{
-        borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '0 48px', height: 64,
+        borderBottom: `1px solid ${t.borderLight}`, padding: '0 48px', height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'rgba(6,9,20,0.9)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 20,
+        background: t.bgNav, backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 20,
+        transition: 'all 0.3s',
       }}>
         <img src="/logo.png" alt="ChatHost.ai" style={{ height: 36 }} />
-        <button
-          onClick={() => supabase.auth.signOut().then(() => router.push('/auth/login'))}
-          style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#64748b', fontSize: 13, padding: '7px 16px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}>
-          Cerrar sesión
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Theme Toggle */}
+          <div style={{ display: 'flex', gap: 6, padding: '4px 6px', background: t.bgInput, borderRadius: 8 }}>
+            <button
+              onClick={() => setTheme('dark')}
+              style={{
+                padding: '6px 12px', borderRadius: 6, border: theme === 'dark' ? `1px solid #818cf8` : 'none',
+                background: theme === 'dark' ? 'rgba(129,140,248,0.15)' : 'transparent',
+                color: theme === 'dark' ? '#818cf8' : t.textDimmed,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+              }}
+            >
+              🌙 Noche
+            </button>
+            <button
+              onClick={() => setTheme('light')}
+              style={{
+                padding: '6px 12px', borderRadius: 6, border: theme === 'light' ? `1px solid #818cf8` : 'none',
+                background: theme === 'light' ? 'rgba(129,140,248,0.15)' : 'transparent',
+                color: theme === 'light' ? '#818cf8' : t.textDimmed,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+              }}
+            >
+              ☀️ Día
+            </button>
+          </div>
+
+          <button
+            onClick={() => supabase.auth.signOut().then(() => router.push('/auth/login'))}
+            style={{ background: 'none', border: `1px solid ${t.border}`, color: t.textDimmed, fontSize: 13, padding: '7px 16px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}>
+            Cerrar sesión
+          </button>
+        </div>
       </nav>
 
       {/* Main Content */}
@@ -629,16 +688,66 @@ export default function HomePage() {
               </div>
 
               {/* ZONA DE PELIGRO */}
-              <div style={{ gridColumn: '1 / -1', borderTop: '2px solid rgba(239,68,68,0.2)', paddingTop: 24 }}>
+              <div style={{ gridColumn: '1 / -1', borderTop: `2px solid rgba(239,68,68,0.2)`, paddingTop: 24 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: '#ef4444', marginBottom: 16 }}>⚠️ Zona de peligro</h3>
-                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: 16 }}>
+
+                {/* ELIMINAR CHAT */}
+                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: 16, marginBottom: 16 }}>
                   <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>Eliminar cuenta</div>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Esta acción no se puede deshacer. Se eliminarán todos tus chats y datos.</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>Eliminar chat</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Esta acción no se puede deshacer. Se eliminarán todos los datos del chat.</div>
                   </div>
-                  <button style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    Eliminar mi cuenta
-                  </button>
+
+                  {!chatToDelete ? (
+                    <>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Selecciona el chat a eliminar</label>
+                      <select
+                        onChange={(e) => setChatToDelete(e.target.value)}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit', marginBottom: 12 }}>
+                        <option value="">-- Selecciona un chat --</option>
+                        {bots.map(bot => {
+                          const c = bot.clients as any
+                          return <option key={bot.client_id} value={bot.client_id}>{c?.widget_name || c?.name}</option>
+                        })}
+                      </select>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                        <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>
+                          <strong>⚠️ Confirma que deseas eliminar este chat</strong>
+                        </div>
+                        <div style={{ fontSize: 13, color: 'white', marginBottom: 10, fontWeight: 500 }}>
+                          {bots.find(b => b.client_id === chatToDelete)?.clients?.widget_name || 'Chat seleccionado'}
+                        </div>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: '#ef4444', display: 'block', marginBottom: 6 }}>Escribe el nombre exacto del chat:</label>
+                        <input
+                          type="text"
+                          placeholder="Ej: Zoe"
+                          value={deleteConfirmInput}
+                          onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit', marginBottom: 12 }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => { setChatToDelete(null); setDeleteConfirmInput('') }}
+                          style={{ padding: '8px 16px', borderRadius: 6, border: `1px solid ${t.border}`, background: 'transparent', color: t.textMuted, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          Cancelar
+                        </button>
+                        <button
+                          disabled={deleteConfirmInput !== (bots.find(b => b.client_id === chatToDelete)?.clients?.widget_name || '')}
+                          style={{
+                            padding: '8px 16px', borderRadius: 6, border: 'none', background: '#ef4444', color: 'white', fontSize: 12, fontWeight: 600,
+                            cursor: deleteConfirmInput === (bots.find(b => b.client_id === chatToDelete)?.clients?.widget_name || '') ? 'pointer' : 'not-allowed',
+                            opacity: deleteConfirmInput === (bots.find(b => b.client_id === chatToDelete)?.clients?.widget_name || '') ? 1 : 0.5,
+                            fontFamily: 'inherit'
+                          }}>
+                          🗑️ Eliminar chat
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
