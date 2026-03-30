@@ -50,6 +50,9 @@ export default function DashboardPage() {
       if (!user) { router.push('/auth/login'); return }
       if (user.email && ADMIN_EMAILS.includes(user.email)) { router.push('/admin'); return }
 
+      // Redirigir a home en lugar de mostrar el dashboard
+      router.push('/home')
+
       const { data } = await supabase
         .from('client_users')
         .select('client_id, clients(name, plan, active, widget_color, widget_name, created_at)')
