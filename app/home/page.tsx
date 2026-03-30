@@ -44,17 +44,25 @@ const THEMES = {
     textDimmed: '#64748b',
     border: 'rgba(255,255,255,0.1)',
     borderLight: 'rgba(255,255,255,0.08)',
+    // Componentes siempre oscuros
+    bgCardDark: '#161b27',
+    bgInputDark: 'rgba(255,255,255,0.05)',
+    borderDark: 'rgba(255,255,255,0.1)',
   },
   light: {
-    bg: '#f8fafc',
-    bgNav: 'rgba(248,250,252,0.95)',
-    bgCard: '#ffffff',
-    bgInput: 'rgba(15,23,42,0.05)',
+    bg: '#ffffff',
+    bgNav: 'rgba(255,255,255,0.95)',
+    bgCard: '#f8fafc',
+    bgInput: '#ffffff',
     text: '#0f172a',
     textMuted: '#475569',
     textDimmed: '#64748b',
-    border: 'rgba(15,23,42,0.1)',
-    borderLight: 'rgba(15,23,42,0.08)',
+    border: 'rgba(15,23,42,0.15)',
+    borderLight: 'rgba(15,23,42,0.1)',
+    // Componentes siempre oscuros (iguales a dark)
+    bgCardDark: '#161b27',
+    bgInputDark: 'rgba(255,255,255,0.05)',
+    borderDark: 'rgba(255,255,255,0.1)',
   },
 }
 
@@ -184,8 +192,8 @@ export default function HomePage() {
                     onClick={() => setViewMode('grande')}
                     style={{
                       padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'grande' ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
-                      background: viewMode === 'grande' ? 'rgba(129,140,248,0.1)' : 'transparent',
-                      color: viewMode === 'grande' ? '#818cf8' : '#64748b',
+                      background: viewMode === 'grande' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.05)',
+                      color: viewMode === 'grande' ? '#818cf8' : '#94a3b8',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
                     }}
                   >
@@ -195,8 +203,8 @@ export default function HomePage() {
                     onClick={() => setViewMode('pequeño')}
                     style={{
                       padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'pequeño' ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
-                      background: viewMode === 'pequeño' ? 'rgba(129,140,248,0.1)' : 'transparent',
-                      color: viewMode === 'pequeño' ? '#818cf8' : '#64748b',
+                      background: viewMode === 'pequeño' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.05)',
+                      color: viewMode === 'pequeño' ? '#818cf8' : '#94a3b8',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
                     }}
                   >
@@ -206,8 +214,8 @@ export default function HomePage() {
                     onClick={() => setViewMode('lista')}
                     style={{
                       padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'lista' ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
-                      background: viewMode === 'lista' ? 'rgba(129,140,248,0.1)' : 'transparent',
-                      color: viewMode === 'lista' ? '#818cf8' : '#64748b',
+                      background: viewMode === 'lista' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.05)',
+                      color: viewMode === 'lista' ? '#818cf8' : '#94a3b8',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
                     }}
                   >
@@ -272,7 +280,7 @@ export default function HomePage() {
                     <Link key={bot.client_id} href={`/admin/clients/${bot.client_id}`} style={{ textDecoration: 'none' }}>
                       <div
                         style={{
-                          background: '#161b27', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14,
+                          background: t.bgCardDark, border: `1px solid ${t.borderDark}`, borderRadius: 14,
                           padding: viewMode === 'grande' ? '22px 20px' : '14px 12px',
                           cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden', minHeight: viewMode === 'grande' ? 200 : 120,
                           display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
@@ -323,7 +331,7 @@ export default function HomePage() {
                 {bots.length < PLAN_BOTS[plan] && (
                   <Link href="/dashboard/new" style={{ textDecoration: 'none' }}>
                     <div style={{
-                      background: 'rgba(99,102,241,0.03)', border: '1px dashed rgba(99,102,241,0.3)', borderRadius: 14,
+                      background: 'rgba(99,102,241,0.08)', border: '1px dashed rgba(129,140,248,0.4)', borderRadius: 14,
                       padding: viewMode === 'grande' ? '22px 20px' : '14px 12px',
                       cursor: 'pointer', transition: 'all 0.2s',
                       minHeight: viewMode === 'grande' ? 200 : 120,
@@ -345,9 +353,9 @@ export default function HomePage() {
           {/* RIGHT: Stats Panel */}
           <div>
             <div style={{
-              background: theme === 'dark' ? 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))' : 'linear-gradient(135deg, rgba(129,140,248,0.05), rgba(99,102,241,0.02))',
-              border: `1px solid ${theme === 'dark' ? 'rgba(129,140,248,0.2)' : 'rgba(129,140,248,0.15)'}`,
-              borderRadius: 16, padding: 24, position: 'sticky', top: 80, transition: 'all 0.3s',
+              background: 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))',
+              border: '1px solid rgba(129,140,248,0.2)',
+              borderRadius: 16, padding: 24, position: 'sticky', top: 80,
             }}>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>📌 Plan actual</div>
@@ -394,7 +402,7 @@ export default function HomePage() {
 
         {/* Tabs: Facturación + Configuración */}
         <div style={{ marginTop: 40 }}>
-          <div style={{ borderBottom: `1px solid ${t.borderLight}`, marginBottom: 24, display: 'flex', gap: 24, transition: 'all 0.3s' }}>
+          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 24, display: 'flex', gap: 24 }}>
             <button
               onClick={() => setActiveTab('overview')}
               style={{
@@ -419,7 +427,7 @@ export default function HomePage() {
               onClick={() => setActiveTab('config')}
               style={{
                 padding: '12px 0', border: 'none', background: 'none', fontSize: 13, fontWeight: activeTab === 'config' ? 700 : 400,
-                color: activeTab === 'config' ? '#818cf8' : '#64748b', borderBottom: `2px solid ${activeTab === 'config' ? '#818cf8' : 'transparent'}`,
+                color: activeTab === 'config' ? '#818cf8' : '#94a3b8', borderBottom: `2px solid ${activeTab === 'config' ? '#818cf8' : 'transparent'}`,
                 cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
               }}
             >
