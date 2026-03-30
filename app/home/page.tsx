@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import PlanModal from '@/components/PlanModal'
 
 const PLAN_BOTS: Record<string, number> = {
   trial: 1, basic: 1, starter: 1, pro: 3, business: 10, agency: 30,
@@ -39,6 +40,7 @@ export default function HomePage() {
   const [plan, setPlan] = useState('trial')
   const [viewMode, setViewMode] = useState<'grande' | 'pequeño' | 'lista'>('grande')
   const [activeTab, setActiveTab] = useState('overview')
+  const [showPlanModal, setShowPlanModal] = useState(false)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -311,7 +313,9 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <button style={{
+              <button
+                onClick={() => setShowPlanModal(true)}
+                style={{
                 width: '100%', padding: '10px 16px', borderRadius: 10, border: `1px solid ${planColor}`,
                 background: 'transparent', color: planColor, fontSize: 12, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
@@ -461,18 +465,189 @@ export default function HomePage() {
           )}
 
           {activeTab === 'facturacion' && (
-            <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <p>Historial de invoices, métodos de pago y próximas facturas. Próximamente: gestión de pagos.</p>
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, marginBottom: 32 }}>
+                {/* INVOICES */}
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>Historial de facturas</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      { date: '2 abr 2026', amount: 49, status: 'Pagado', id: 'INV-2604-001' },
+                      { date: '2 mar 2026', amount: 49, status: 'Pagado', id: 'INV-0203-001' },
+                      { date: '2 feb 2026', amount: 49, status: 'Pagado', id: 'INV-0202-001' },
+                    ].map(inv => (
+                      <div key={inv.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>{inv.id}</div>
+                          <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{inv.date}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#818cf8' }}>{inv.amount}€</div>
+                            <div style={{ fontSize: 11, color: '#22c55e', marginTop: 2 }}>{inv.status}</div>
+                          </div>
+                          <a href="#" style={{ color: '#818cf8', textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>📥 Descargar</a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* MÉTODO DE PAGO */}
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>💳 Método de pago</h3>
+                  <div style={{ background: 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))', border: '1px solid rgba(129,140,248,0.2)', borderRadius: 12, padding: 16 }}>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
+                      <div style={{ fontWeight: 600, color: 'white', marginBottom: 6 }}>Visa •••• 4242</div>
+                      <div>Expira: 12/27</div>
+                    </div>
+                    <button style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(129,140,248,0.3)', background: 'transparent', color: '#818cf8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      Actualizar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* DOWNGRADE SUGERIDO */}
+              <div style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1), rgba(34,197,94,0.05))', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                  <div style={{ fontSize: 28 }}>💡</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#22c55e', marginBottom: 4 }}>Ahorra dinero con un plan más pequeño</div>
+                    <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, marginBottom: 12 }}>
+                      Actualmente tienes <strong style={{ color: 'white' }}>Business (99€)</strong> pero solo usas 6 bots y 2,500 mensajes.
+                      Cambiando a <strong style={{ color: 'white' }}>Pro + 3 bots extra (79€)</strong> ahorras <strong style={{ color: '#22c55e' }}>20€ cada mes</strong>.
+                    </div>
+                    <button
+                      onClick={() => setShowPlanModal(true)}
+                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#22c55e', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      Ver opciones de ahorro
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === 'config' && (
-            <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <p>Cambiar contraseña, datos de cuenta y preferencias. Próximamente: más opciones.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+              {/* PERFIL */}
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>👤 Perfil</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Email</label>
+                    <input type="email" disabled defaultValue="user@example.com" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)', color: '#94a3b8', fontSize: 13, fontFamily: 'inherit' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Nombre</label>
+                    <input type="text" defaultValue="Tu nombre" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Teléfono</label>
+                    <input type="tel" placeholder="+34 123 456 789" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit' }} />
+                  </div>
+                  <button style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#818cf8', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Guardar cambios
+                  </button>
+                </div>
+              </div>
+
+              {/* SEGURIDAD */}
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>🔐 Seguridad</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Contraseña actual</label>
+                    <input type="password" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Nueva contraseña</label>
+                    <input type="password" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit' }} />
+                  </div>
+                  <button style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#818cf8', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Cambiar contraseña
+                  </button>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, marginTop: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>2FA (Autenticación de dos factores)</div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Protege tu cuenta con una capa extra</div>
+                      </div>
+                      <button style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #818cf8', background: 'transparent', color: '#818cf8', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Activar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* NOTIFICACIONES */}
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>🔔 Notificaciones</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    { label: 'Alertas de facturación', desc: 'Recibe email cuando se cobre tu plan' },
+                    { label: 'Alertas de uso', desc: 'Te aviso cuando uses el 80% de mensajes' },
+                    { label: 'Reportes semanales', desc: 'Resumen de actividad cada lunes' },
+                  ].map(n => (
+                    <div key={n.label} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'white' }}>{n.label}</div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>{n.desc}</div>
+                      </div>
+                      <div style={{ marginLeft: 12 }}>
+                        <input type="checkbox" defaultChecked style={{ width: 20, height: 20, cursor: 'pointer' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* PREFERENCIAS */}
+              <div>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>🌍 Preferencias</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Idioma</label>
+                    <select style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit' }}>
+                      <option>Español</option>
+                      <option>English</option>
+                      <option>Français</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Zona horaria</label>
+                    <select style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', fontSize: 13, fontFamily: 'inherit' }}>
+                      <option>Europa/Madrid (UTC+1)</option>
+                      <option>Europa/Londres (UTC+0)</option>
+                      <option>América/Nueva York (UTC-5)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* ZONA DE PELIGRO */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '2px solid rgba(239,68,68,0.2)', paddingTop: 24 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: '#ef4444', marginBottom: 16 }}>⚠️ Zona de peligro</h3>
+                <div style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>Eliminar cuenta</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Esta acción no se puede deshacer. Se eliminarán todos tus chats y datos.</div>
+                  </div>
+                  <button style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #ef4444', background: 'transparent', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Eliminar mi cuenta
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Plan Modal */}
+      <PlanModal isOpen={showPlanModal} currentPlan={plan} onClose={() => setShowPlanModal(false)} />
     </div>
   )
 }
