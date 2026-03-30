@@ -48,21 +48,23 @@ const THEMES = {
     bgCardDark: '#161b27',
     bgInputDark: 'rgba(255,255,255,0.05)',
     borderDark: 'rgba(255,255,255,0.1)',
+    bgChatCard: '#161b27',
   },
   light: {
     bg: '#ffffff',
-    bgNav: 'rgba(255,255,255,0.95)',
+    bgNav: '#ffffff',
     bgCard: '#f8fafc',
     bgInput: '#ffffff',
     text: '#0f172a',
-    textMuted: '#475569',
-    textDimmed: '#64748b',
-    border: 'rgba(15,23,42,0.15)',
-    borderLight: 'rgba(15,23,42,0.1)',
-    // Componentes siempre oscuros (iguales a dark)
-    bgCardDark: '#161b27',
-    bgInputDark: 'rgba(255,255,255,0.05)',
-    borderDark: 'rgba(255,255,255,0.1)',
+    textMuted: '#64748b',
+    textDimmed: '#94a3b8',
+    border: 'rgba(15,23,42,0.1)',
+    borderLight: 'rgba(15,23,42,0.08)',
+    // Componentes siempre oscuros en light (pero con color suave)
+    bgCardDark: '#e0e7ff',
+    bgInputDark: '#f3f4f6',
+    borderDark: 'rgba(15,23,42,0.15)',
+    bgChatCard: '#e0e7ff',
   },
 }
 
@@ -191,8 +193,8 @@ export default function HomePage() {
                   <button
                     onClick={() => setViewMode('grande')}
                     style={{
-                      padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'grande' ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
-                      background: viewMode === 'grande' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.05)',
+                      padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'grande' ? '#818cf8' : 'rgba(255,255,255,0.2)'}`,
+                      background: viewMode === 'grande' ? 'rgba(129,140,248,0.2)' : 'rgba(255,255,255,0.1)',
                       color: viewMode === 'grande' ? '#818cf8' : '#94a3b8',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
                     }}
@@ -202,8 +204,8 @@ export default function HomePage() {
                   <button
                     onClick={() => setViewMode('pequeño')}
                     style={{
-                      padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'pequeño' ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
-                      background: viewMode === 'pequeño' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.05)',
+                      padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'pequeño' ? '#818cf8' : 'rgba(255,255,255,0.2)'}`,
+                      background: viewMode === 'pequeño' ? 'rgba(129,140,248,0.2)' : 'rgba(255,255,255,0.1)',
                       color: viewMode === 'pequeño' ? '#818cf8' : '#94a3b8',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
                     }}
@@ -213,8 +215,8 @@ export default function HomePage() {
                   <button
                     onClick={() => setViewMode('lista')}
                     style={{
-                      padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'lista' ? '#818cf8' : 'rgba(255,255,255,0.1)'}`,
-                      background: viewMode === 'lista' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.05)',
+                      padding: '8px 12px', borderRadius: 8, border: `1px solid ${viewMode === 'lista' ? '#818cf8' : 'rgba(255,255,255,0.2)'}`,
+                      background: viewMode === 'lista' ? 'rgba(129,140,248,0.2)' : 'rgba(255,255,255,0.1)',
                       color: viewMode === 'lista' ? '#818cf8' : '#94a3b8',
                       cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
                     }}
@@ -280,7 +282,7 @@ export default function HomePage() {
                     <Link key={bot.client_id} href={`/admin/clients/${bot.client_id}`} style={{ textDecoration: 'none' }}>
                       <div
                         style={{
-                          background: t.bgCardDark, border: `1px solid ${t.borderDark}`, borderRadius: 14,
+                          background: t.bgChatCard, border: `1px solid ${t.borderDark}`, borderRadius: 14,
                           padding: viewMode === 'grande' ? '22px 20px' : '14px 12px',
                           cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden', minHeight: viewMode === 'grande' ? 200 : 120,
                           display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
@@ -300,25 +302,25 @@ export default function HomePage() {
                       >
                         <div style={{ position: 'absolute', top: 0, right: 0, width: 60, height: 60, background: `radial-gradient(circle, ${color}30, transparent)`, pointerEvents: 'none' }} />
 
-                        <div style={{ width: viewMode === 'grande' ? 44 : 32, height: viewMode === 'grande' ? 44 : 32, borderRadius: 10, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: viewMode === 'grande' ? 22 : 16, boxShadow: `0 0 20px ${color}50`, flexShrink: 0 }}>
+                        <div style={{ width: viewMode === 'grande' ? 44 : 32, height: viewMode === 'grande' ? 44 : 32, borderRadius: 10, background: theme === 'light' ? '#818cf8' : color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: viewMode === 'grande' ? 22 : 16, boxShadow: theme === 'light' ? '0 0 12px rgba(129,140,248,0.4)' : `0 0 20px ${color}50`, flexShrink: 0 }}>
                           🤖
                         </div>
 
                         <div>
-                          <div style={{ fontSize: viewMode === 'grande' ? 16 : 12, fontWeight: 600, color: 'white', marginBottom: 2 }}>
+                          <div style={{ fontSize: viewMode === 'grande' ? 16 : 12, fontWeight: 600, color: theme === 'light' ? '#1e293b' : 'white', marginBottom: 2 }}>
                             {c?.widget_name || c?.name}
                           </div>
-                          <div style={{ fontSize: 11, color: '#475569' }}>
+                          <div style={{ fontSize: 11, color: theme === 'light' ? '#475569' : '#475569' }}>
                             {c?.name}{createdYear ? ` · ${createdYear}` : ''}
                           </div>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: viewMode === 'grande' ? 12 : 6 }}>
-                          <span style={{ fontSize: 10, fontWeight: 600, color: planColor, background: planColor + '18', padding: '2px 8px', borderRadius: 16, textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, color: theme === 'light' ? '#6366f1' : planColor, background: theme === 'light' ? '#c7d2fe' : planColor + '18', padding: '2px 8px', borderRadius: 16, textTransform: 'uppercase' }}>
                             {c?.plan}
                           </span>
-                          <span style={{ fontSize: 11, color: c?.active ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', gap: 3 }}>
-                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: c?.active ? '#4ade80' : '#f87171' }} />
+                          <span style={{ fontSize: 11, color: c?.active ? '#22c55e' : '#ef4444', display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: c?.active ? '#22c55e' : '#ef4444' }} />
                             {c?.active ? 'Activo' : 'Inactivo'}
                           </span>
                         </div>
@@ -353,45 +355,45 @@ export default function HomePage() {
           {/* RIGHT: Stats Panel */}
           <div>
             <div style={{
-              background: 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))',
-              border: '1px solid rgba(129,140,248,0.2)',
+              background: theme === 'dark' ? 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))' : '#f3f4f6',
+              border: theme === 'dark' ? '1px solid rgba(129,140,248,0.2)' : '1px solid rgba(15,23,42,0.1)',
               borderRadius: 16, padding: 24, position: 'sticky', top: 80,
             }}>
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>📌 Plan actual</div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: planColor, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: theme === 'dark' ? '#64748b' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>📌 Plan actual</div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: theme === 'dark' ? planColor : '#7c3aed', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
                   {plan}
                 </div>
               </div>
 
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20, marginBottom: 20 }}>
-                <div style={{ fontSize: 32, fontWeight: 700, color: 'white', marginBottom: 4 }}>
+              <div style={{ borderTop: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(15,23,42,0.15)', paddingTop: 20, marginBottom: 20 }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: theme === 'dark' ? 'white' : '#0f172a', marginBottom: 4 }}>
                   {price}€
                 </div>
-                <div style={{ fontSize: 12, color: '#475569' }}>/mes</div>
+                <div style={{ fontSize: 12, color: theme === 'dark' ? '#475569' : '#64748b' }}>/mes</div>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 12 }}>
-                <div style={{ color: '#94a3b8', marginBottom: 8 }}>
-                  <span style={{ color: '#818cf8', fontWeight: 600 }}>📅 Próx. factura:</span> {nextBillingDate}
+              <div style={{ background: theme === 'dark' ? 'rgba(255,255,255,0.02)' : '#ffffff', borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 12, border: theme === 'light' ? '1px solid rgba(15,23,42,0.1)' : 'none' }}>
+                <div style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b', marginBottom: 8 }}>
+                  <span style={{ color: theme === 'dark' ? '#818cf8' : '#6366f1', fontWeight: 600 }}>📅 Próx. factura:</span> {nextBillingDate}
                 </div>
-                <div style={{ color: '#94a3b8' }}>
-                  <span style={{ color: '#818cf8', fontWeight: 600 }}>📊 Mensajes:</span> 1,240/3,000
+                <div style={{ color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
+                  <span style={{ color: theme === 'dark' ? '#818cf8' : '#6366f1', fontWeight: 600 }}>📊 Mensajes:</span> 1,240/3,000
                 </div>
               </div>
 
               <button
                 onClick={() => setShowPlanModal(true)}
                 style={{
-                width: '100%', padding: '10px 16px', borderRadius: 10, border: `1px solid ${planColor}`,
-                background: 'transparent', color: planColor, fontSize: 12, fontWeight: 600,
+                width: '100%', padding: '10px 16px', borderRadius: 10, border: `1px solid ${theme === 'dark' ? planColor : '#c7d2fe'}`,
+                background: theme === 'dark' ? 'transparent' : '#f3f4f6', color: theme === 'dark' ? planColor : '#6366f1', fontSize: 12, fontWeight: 600,
                 cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
               }}
                 onMouseOver={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = planColor + '15'
+                  (e.currentTarget as HTMLButtonElement).style.background = theme === 'dark' ? planColor + '15' : '#e5e7eb'
                 }}
                 onMouseOut={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+                  (e.currentTarget as HTMLButtonElement).style.background = theme === 'dark' ? 'transparent' : '#f3f4f6'
                 }}
               >
                 Cambiar plan
