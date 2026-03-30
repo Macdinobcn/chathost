@@ -49,56 +49,91 @@ export default function TabVentas() {
   }
 
   async function buscarEmpresas() {
+    if (!sector || !region) {
+      toast('error', 'Error', 'Selecciona sector y región')
+      return
+    }
+
     setSearching(true)
-    const res = await fetch('/api/sales/search-companies', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sector, region, count: 10 }),
-    })
-    const data = await res.json()
-    setCompanies(data.empresas.map((e: any) => ({ ...e, validado: false })))
-    setSearching(false)
+    try {
+      const res = await fetch('/api/sales/search-companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sector, region, count: 10 }),
+      })
+      const data = await res.json()
+
+      if (data.error) {
+        toast('error', 'Error en búsqueda', data.error)
+        setSearching(false)
+        return
+      }
+
+      if (!data.empresas || data.empresas.length === 0) {
+        toast('info', 'Sin resultados', 'No se encontraron empresas con esos criterios')
+        setSearching(false)
+        return
+      }
+
+      setCompanies(data.empresas.map((e: any) => ({ ...e, validado: false })))
+      toast('success', `Encontradas ${data.empresas.length} empresas`, `Valida las que te interesen`)
+    } catch (err: any) {
+      toast('error', 'Error', err.message)
+    } finally {
+      setSearching(false)
+    }
   }
 
   async function validarYCrear(empresa: Company) {
     if (!empresa.web.startsWith('http')) empresa.web = 'https://' + empresa.web
 
     setLoading(true)
-    const res = await fetch('/api/sales/create-trial-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre: empresa.nombre,
-        website_url: empresa.web,
-        ciudad: empresa.ciudad,
-        lat: empresa.lat,
-        lng: empresa.lng,
-      }),
-    })
-    const data = await res.json()
-    setLoading(false)
+    try {
+      const res = await fetch('/api/sales/create-trial-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: empresa.nombre,
+          website_url: empresa.web,
+          ciudad: empresa.ciudad,
+          lat: empresa.lat,
+          lng: empresa.lng,
+        }),
+      })
+      const data = await res.json()
 
-    if (data.error) {
-      toast('error', 'Error creando chat', data.error)
-      return
-    }
+      if (data.error) {
+        toast('error', 'Error creando chat', data.error)
+        setLoading(false)
+        return
+      }
 
-    // Send email
-    const emailRes = await fetch('/api/sales/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre: empresa.nombre,
-        email: 'info@' + empresa.web.replace('https://', '').split('/')[0],
-        widget_id: data.widget_id,
-        trial_url: data.trial_url,
-      }),
-    })
+      // Send email
+      const emailRes = await fetch('/api/sales/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: empresa.nombre,
+          email: 'info@' + empresa.web.replace('https://', '').split('/')[0],
+          widget_id: data.widget_id,
+          trial_url: data.trial_url,
+        }),
+      })
 
-    if (emailRes.ok) {
-      toast('success', 'Chat creado y email enviado', `${empresa.nombre} está en trial`)
+      const emailData = await emailRes.json()
+
+      if (emailData.error) {
+        toast('warning', 'Chat creado pero email falló', emailData.error)
+      } else {
+        toast('success', '✓ Chat creado y email enviado', `${empresa.nombre} está en trial`)
+      }
+
       setCompanies(companies.filter(c => c.nombre !== empresa.nombre))
-      cargarTrials()
+      await cargarTrials()
+    } catch (err: any) {
+      toast('error', 'Error', err.message)
+    } finally {
+      setLoading(false)
     }
   }
 

@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   const { nombre, email, widget_id, trial_url } = await req.json()
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
-  })
 
   const htmlBody = `
 <!DOCTYPE html>
@@ -95,14 +92,19 @@ export async function POST(req: NextRequest) {
   `
 
   try {
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
+    const response = await resend.emails.send({
+      from: 'ChatHost.ai <noreply@resend.dev>',
       to: email,
       subject: `🚀 Tu chatbot ${nombre} está listo para probar`,
       html: htmlBody,
     })
 
-    return NextResponse.json({ success: true, sent_to: email })
+    if (response.error) {
+      console.error('[sales/send-email]', response.error)
+      return NextResponse.json({ error: response.error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ error: null, sent_to: email, message_id: response.data?.id })
   } catch (err: any) {
     console.error('[sales/send-email]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [bots, setBots] = useState<BotEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [maxBots, setMaxBots] = useState(1)
+  const [activeTab, setActiveTab] = useState('chats')
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -91,16 +92,45 @@ export default function DashboardPage() {
         </button>
       </nav>
 
+      {/* Tabs */}
+      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(6,9,20,0.5)', backdropFilter: 'blur(10px)', position: 'sticky', top: 64, zIndex: 9 }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', padding: '0 24px', display: 'flex', gap: 0 }}>
+          <button
+            onClick={() => setActiveTab('chats')}
+            style={{
+              padding: '14px 20px', border: 'none', background: 'none', fontSize: 13, fontWeight: activeTab === 'chats' ? 700 : 400,
+              color: activeTab === 'chats' ? '#818cf8' : '#64748b', borderBottom: `2px solid ${activeTab === 'chats' ? '#818cf8' : 'transparent'}`,
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+            }}
+          >
+            📌 Mis chats
+          </button>
+          <button
+            onClick={() => setActiveTab('config')}
+            style={{
+              padding: '14px 20px', border: 'none', background: 'none', fontSize: 13, fontWeight: activeTab === 'config' ? 700 : 400,
+              color: activeTab === 'config' ? '#818cf8' : '#64748b', borderBottom: `2px solid ${activeTab === 'config' ? '#818cf8' : 'transparent'}`,
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
+            }}
+          >
+            ⚙️ Configuración
+          </button>
+        </div>
+      </div>
+
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '56px 24px' }}>
 
+        {/* TAB: MIS CHATS */}
+        {activeTab === 'chats' && (
+        <>
         {/* Header */}
         <div style={{ marginBottom: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8', fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 20, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              ✦ Mis chatbots
+              ✦ Dashboard
             </div>
             <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 34, fontWeight: 700, color: 'white', marginBottom: 8, letterSpacing: '-0.02em' }}>
-              ¿Qué chatbot quieres gestionar?
+              Mis chats
             </h1>
             <p style={{ fontSize: 14, color: '#475569' }}>
               <strong style={{ color: '#94a3b8' }}>{bots.length}</strong> de <strong style={{ color: '#94a3b8' }}>{maxBots}</strong> chatbots usados en tu plan.
@@ -192,6 +222,25 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+        </>
+        )}
+
+        {/* TAB: CONFIGURACIÓN */}
+        {activeTab === 'config' && (
+          <div>
+            <div style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'white', marginBottom: 8 }}>⚙️ Configuración</h2>
+              <p style={{ fontSize: 14, color: '#475569' }}>Próximamente: ajustes del dashboard, preferencias y más.</p>
+            </div>
+            <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, padding: 24, textAlign: 'center' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🔧</div>
+              <div style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6 }}>
+                Esta sección se está preparando.<br />
+                Vuelve pronto para más opciones.
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
