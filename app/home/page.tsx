@@ -345,9 +345,9 @@ export default function HomePage() {
           {/* RIGHT: Stats Panel */}
           <div>
             <div style={{
-              background: 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))',
-              border: '1px solid rgba(129,140,248,0.2)',
-              borderRadius: 16, padding: 24, position: 'sticky', top: 80,
+              background: theme === 'dark' ? 'linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.05))' : 'linear-gradient(135deg, rgba(129,140,248,0.05), rgba(99,102,241,0.02))',
+              border: `1px solid ${theme === 'dark' ? 'rgba(129,140,248,0.2)' : 'rgba(129,140,248,0.15)'}`,
+              borderRadius: 16, padding: 24, position: 'sticky', top: 80, transition: 'all 0.3s',
             }}>
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>📌 Plan actual</div>
@@ -394,7 +394,7 @@ export default function HomePage() {
 
         {/* Tabs: Facturación + Configuración */}
         <div style={{ marginTop: 40 }}>
-          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 24, display: 'flex', gap: 24 }}>
+          <div style={{ borderBottom: `1px solid ${t.borderLight}`, marginBottom: 24, display: 'flex', gap: 24, transition: 'all 0.3s' }}>
             <button
               onClick={() => setActiveTab('overview')}
               style={{
@@ -596,8 +596,8 @@ export default function HomePage() {
                 <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>👤 Perfil</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Email</label>
-                    <input type="email" disabled defaultValue="user@example.com" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)', color: '#94a3b8', fontSize: 13, fontFamily: 'inherit' }} />
+                    <label style={{ fontSize: 12, fontWeight: 600, color: t.textDimmed, display: 'block', marginBottom: 6 }}>Email</label>
+                    <input type="email" disabled defaultValue="user@example.com" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgInput, color: t.textMuted, fontSize: 13, fontFamily: 'inherit', transition: 'all 0.3s' }} />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 600, color: '#64748b', display: 'block', marginBottom: 6 }}>Nombre</label>
