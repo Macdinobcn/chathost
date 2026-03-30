@@ -366,8 +366,97 @@ export default function HomePage() {
 
           {/* TAB CONTENT */}
           {activeTab === 'overview' && (
-            <div style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.6 }}>
-              <p>Resumen de tu actividad y uso. Próximamente: gráficos detallados.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24 }}>
+              {/* LEFT: Gráfico + Listado */}
+              <div>
+                {/* Gráfico de Pie simple */}
+                <div style={{ marginBottom: 32 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 16 }}>Distribución de mensajes por chat</h3>
+                  <svg width="200" height="200" style={{ display: 'block', margin: '0 auto' }}>
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="#818cf8" strokeWidth="20" strokeDasharray="176 440" />
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="#22c55e" strokeWidth="20" strokeDasharray="154 440" strokeDashoffset="-176" />
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="#f97316" strokeWidth="20" strokeDasharray="110 440" strokeDashoffset="-330" />
+                  </svg>
+                  <div style={{ marginTop: 16, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#818cf8' }} />
+                      <span style={{ color: '#94a3b8' }}>Zoe: 40%</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
+                      <span style={{ color: '#94a3b8' }}>Luna: 35%</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f97316' }} />
+                      <span style={{ color: '#94a3b8' }}>Test: 25%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Listado de chats con % */}
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: 'white', marginBottom: 12 }}>Mensajes por chat</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      { name: 'Zoe', msgs: 496, total: 1240, color: '#818cf8' },
+                      { name: 'Luna', msgs: 434, total: 1240, color: '#22c55e' },
+                      { name: 'Test', msgs: 310, total: 1240, color: '#f97316' },
+                    ].map(chat => (
+                      <div key={chat.name}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: 13, color: 'white', fontWeight: 500 }}>{chat.name}</span>
+                          <span style={{ fontSize: 12, color: '#818cf8', fontWeight: 600 }}>{chat.msgs} msgs · {Math.round((chat.msgs / chat.total) * 100)}%</span>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, height: 8, overflow: 'hidden' }}>
+                          <div style={{ background: chat.color, height: '100%', width: `${(chat.msgs / chat.total) * 100}%`, transition: 'width 0.3s' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: Stats generales */}
+              <div>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 20 }}>
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>📊 Uso total</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#818cf8' }}>41%</div>
+                    <div style={{ fontSize: 12, color: '#475569', marginTop: 4 }}>de tu cuota este mes</div>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span>Usados</span>
+                        <span style={{ color: '#818cf8', fontWeight: 600 }}>1,240</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span>Disponibles</span>
+                        <span style={{ color: '#22c55e', fontWeight: 600 }}>3,000</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Restantes</span>
+                        <span style={{ color: '#f97316', fontWeight: 600 }}>1,760</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 12, marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 600, marginBottom: 4 }}>✓ Chats activos</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#22c55e' }}>2 de 3</div>
+                  </div>
+
+                  <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.6 }}>
+                    <div style={{ marginBottom: 8 }}>
+                      <span style={{ color: '#64748b' }}>Promedio/chat:</span> <span style={{ color: 'white', fontWeight: 600 }}>413 msgs</span>
+                    </div>
+                    <div>
+                      <span style={{ color: '#64748b' }}>Trending:</span> <span style={{ color: '#22c55e', fontWeight: 600 }}>↑ +120 esta semana</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
