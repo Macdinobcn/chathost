@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AdminTopbar from '@/components/AdminTopbar'
+import { ToastContainer, toast } from '@/components/Toast'
 import TabIncidencias from './tabs/TabIncidencias'
 import TabSentimiento from './tabs/TabSentimiento'
 import TabMarketing from './tabs/TabMarketing'
+import TabVentas from './tabs/TabVentas'
 
 interface ClienteResumen {
   id: string; name: string; website_url: string; plan: string; active: boolean
@@ -37,9 +39,11 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
 
 const ADMIN_TABS = [
   { key: 'clientes', label: '👥 Clientes' },
+  { key: 'ventas', label: '💰 Ventas' },
   { key: 'incidencias', label: '🚨 Incidencias' },
   { key: 'sentimiento', label: '💬 Sentimiento' },
   { key: 'marketing', label: '📣 Marketing' },
+  { key: 'configuracion', label: '⚙️ Configuración' },
 ]
 
 function ClientRow({ c, mes }: { c: ClienteResumen; mes: string }) {
@@ -115,8 +119,12 @@ export default function AdminPage() {
     const res = await fetch('/api/admin/setup-chathost-bot', { method: 'POST' })
     const data = await res.json()
     setSetupLoading(false)
-    if (data.error) alert('Error: ' + data.error)
-    else { alert(`Bot ChatHost.ai ${data.action === 'created' ? 'creado' : 'actualizado'} — ${data.wordCount} palabras en KB`); cargar() }
+    if (data.error) {
+      toast('error', 'Error al crear bot', data.error)
+    } else {
+      toast('success', `Bot ChatHost.ai ${data.action === 'created' ? 'creado' : 'actualizado'}`, `${data.wordCount} palabras en Knowledge Base`)
+      cargar()
+    }
   }
 
   const mes = new Date().toISOString().slice(0, 7)
@@ -131,38 +139,42 @@ export default function AdminPage() {
 
   return (
     <div style={s.wrap}>
-      <AdminTopbar
-        actions={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {actualizado && <span style={{ fontSize: 11, color: '#64748b' }}>Actualizado: {actualizado}</span>}
-            <button onClick={cargar} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #334155', background: '#0f172a', color: '#94a3b8', cursor: 'pointer' }}>↺ Refresh</button>
-            <button onClick={setupChathostBot} disabled={setupLoading} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #6366f1', background: '#eff6ff', color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>
-              {setupLoading ? '...' : '🤖 Setup bot ChatHost'}
-            </button>
-            <Link href="/admin/clients/new" style={{ background: '#2563eb', color: 'white', padding: '7px 16px', borderRadius: 8, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>+ Nuevo cliente</Link>
-          </div>
-        }
-      />
+      <ToastContainer />
+      <AdminTopbar />
 
       {/* Tabs de navegación admin */}
-      <div style={{ borderBottom: '1px solid #eaecf0', background: 'white', paddingLeft: 28 }}>
-        <div style={{ display: 'flex', gap: 0, maxWidth: 1200, margin: '0 auto' }}>
-          {ADMIN_TABS.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              style={{
-                padding: '12px 20px', border: 'none', background: 'none',
-                fontSize: 13, fontWeight: activeTab === t.key ? 700 : 400,
-                color: activeTab === t.key ? '#2563eb' : '#64748b',
-                borderBottom: `2px solid ${activeTab === t.key ? '#2563eb' : 'transparent'}`,
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                marginBottom: -1,
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
+      <div style={{ borderBottom: '1px solid #eaecf0', background: 'white' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, maxWidth: 1200, margin: '0 auto', paddingLeft: 28, paddingRight: 28, justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: 0 }}>
+            {ADMIN_TABS.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                style={{
+                  padding: '12px 20px', border: 'none', background: 'none',
+                  fontSize: 13, fontWeight: activeTab === t.key ? 700 : 400,
+                  color: activeTab === t.key ? '#2563eb' : '#64748b',
+                  borderBottom: `2px solid ${activeTab === t.key ? '#2563eb' : 'transparent'}`,
+                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                  marginBottom: -1,
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Botones de acción — solo en tab Clientes */}
+          {activeTab === 'clientes' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingRight: 0 }}>
+              {actualizado && <span style={{ fontSize: 11, color: '#64748b' }}>Act: {actualizado}</span>}
+              <button onClick={cargar} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #334155', background: '#0f172a', color: '#94a3b8', cursor: 'pointer', fontFamily: 'inherit' }}>↺</button>
+              <button onClick={setupChathostBot} disabled={setupLoading} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #6366f1', background: '#eff6ff', color: '#6366f1', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>
+                {setupLoading ? '...' : '🤖'}
+              </button>
+              <Link href="/admin/clients/new" style={{ background: '#2563eb', color: 'white', padding: '6px 14px', borderRadius: 8, textDecoration: 'none', fontSize: 11, fontWeight: 600, fontFamily: 'inherit' }}>+ Bot</Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -204,6 +216,9 @@ export default function AdminPage() {
           </>
         )}
 
+        {/* ── VENTAS ──────────────────────────────────────────────── */}
+        {activeTab === 'ventas' && <TabVentas />}
+
         {/* ── INCIDENCIAS ──────────────────────────────────────────── */}
         {activeTab === 'incidencias' && <TabIncidencias />}
 
@@ -212,6 +227,17 @@ export default function AdminPage() {
 
         {/* ── MARKETING ────────────────────────────────────────────── */}
         {activeTab === 'marketing' && <TabMarketing />}
+
+        {/* ── CONFIGURACIÓN ────────────────────────────────────────── */}
+        {activeTab === 'configuracion' && (
+          <div style={{ ...s.card, padding: 48, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>⚙️</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#101828', marginBottom: 8 }}>Configuración global</div>
+            <div style={{ fontSize: 13, color: '#98a2b3', maxWidth: 400, margin: '0 auto', lineHeight: 1.6 }}>
+              Próximamente: configuración de webhooks, límites globales, templates, integraciones y más.
+            </div>
+          </div>
+        )}
 
         <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: '#d0d5dd' }}>Panel privado ChatHost.ai</div>
       </div>
