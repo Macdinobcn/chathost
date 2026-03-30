@@ -1,6 +1,21 @@
 // app/admin/clients/[id]/tabs/TabGeneral.tsx
 import { S, PLAN_CREDITOS } from '@/lib/admin-styles'
 
+const ALL_LANGUAGES = [
+  { code: 'es', flag: '🇪🇸', name: 'Español' },
+  { code: 'en', flag: '🇬🇧', name: 'English' },
+  { code: 'fr', flag: '🇫🇷', name: 'Français' },
+  { code: 'de', flag: '🇩🇪', name: 'Deutsch' },
+  { code: 'it', flag: '🇮🇹', name: 'Italiano' },
+  { code: 'pt', flag: '🇵🇹', name: 'Português' },
+  { code: 'nl', flag: '🇳🇱', name: 'Nederlands' },
+  { code: 'ca', flag: '🏴', name: 'Català' },
+  { code: 'zh', flag: '🇨🇳', name: '中文' },
+  { code: 'ja', flag: '🇯🇵', name: '日本語' },
+  { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+  { code: 'ar', flag: '🇸🇦', name: 'العربية' },
+]
+
 interface Props {
   cliente: any
   kb: any
@@ -93,10 +108,59 @@ export default function TabGeneral({ cliente, kb, costeMes, formGeneral, setForm
             </div>
           ))}
 
+          {/* Idiomas del chatbot */}
+          <div style={{ ...S.card, marginBottom: 0 }}>
+            <div style={S.secLabel}>🌍 Idiomas del chatbot</div>
+            <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12, lineHeight: 1.5 }}>
+              Selecciona los idiomas en que puede responder. Si no marcas ninguno, responde en todos.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+              {ALL_LANGUAGES.map(lang => {
+                const active = (formGeneral.widget_languages || []).includes(lang.code)
+                return (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      const current: string[] = formGeneral.widget_languages || []
+                      setFormGeneral({
+                        ...formGeneral,
+                        widget_languages: active
+                          ? current.filter((c: string) => c !== lang.code)
+                          : [...current, lang.code],
+                      })
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '5px 11px', borderRadius: 20, fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                      background: active ? themeColor + '18' : '#f8fafc',
+                      border: `1.5px solid ${active ? themeColor : '#e2e8f0'}`,
+                      color: active ? themeColor : '#64748b',
+                    }}
+                  >
+                    <span>{lang.flag}</span> {lang.name}
+                    {active && <span style={{ marginLeft: 2, fontWeight: 800 }}>✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+            {(formGeneral.widget_languages || []).length === 0 && (
+              <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic' }}>
+                Sin restricción — el bot responde en cualquier idioma automáticamente.
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 12 }}>
+              <button onClick={() => guardar('general', { widget_languages: formGeneral.widget_languages || [] })} style={S.btn(themeColor)}>
+                {saving.general ? 'Guardando...' : 'Guardar idiomas'}
+              </button>
+              {saved.general && <span style={{ fontSize: 12, color: '#22c55e' }}>{saved.general}</span>}
+            </div>
+          </div>
+
           <div style={{ ...S.card, marginBottom: 0 }}>
             <div style={S.secLabel}>Zona de peligro</div>
             <button onClick={eliminarCliente} style={{ ...S.btn('#fef2f2', '#dc2626'), border: '1.5px solid #fecaca' }}>
-              🗑 Eliminar cliente
+              🗑 Eliminar chatbot
             </button>
           </div>
         </div>

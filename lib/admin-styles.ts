@@ -138,6 +138,10 @@ export const PLAN_CREDITOS: Record<string, number> = {
   basic: 500, starter: 500, pro: 3000, business: 10000, agency: 30000,
 }
 
+export const PLAN_BOTS: Record<string, number> = {
+  trial: 1, basic: 1, starter: 1, pro: 3, business: 10, agency: 30,
+}
+
 export const SPECIAL_TYPES = [
   { id: 'promo',     label: '🏷 Promo',     color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', text: '#92400e' },
   { id: 'event',     label: '🎉 Evento',    color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe', text: '#4c1d95' },

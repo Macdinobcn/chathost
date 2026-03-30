@@ -72,6 +72,10 @@ export async function POST(req: NextRequest) {
         price: priceId,
         quantity: quantity || 1,
       }]
+      // Pasar metadata a la suscripción para que el webhook pueda leer el plan
+      sessionConfig.subscription_data = {
+        metadata: { client_id: clientId, type },
+      }
     } else {
       // Recarga puntual
       sessionConfig.mode = 'payment'

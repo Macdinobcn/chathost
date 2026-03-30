@@ -14,7 +14,7 @@ const PLANS = [
   { key: 'starter',  name: 'Starter',  price: '€19/mes', msgs: '500 msgs',    bots: '1 bot',    color: '#22c55e', emoji: '🌱' },
   { key: 'pro',      name: 'Pro',      price: '€49/mes', msgs: '3.000 msgs',  bots: '3 bots',   color: '#4f46e5', emoji: '🚀' },
   { key: 'business', name: 'Business', price: '€99/mes', msgs: '10.000 msgs', bots: '10 bots',  color: '#7c3aed', emoji: '💼' },
-  { key: 'agency',   name: 'Agency',   price: '€199/mes', msgs: '30.000 msgs', bots: '50 bots', color: '#fb923c', emoji: '🏢' },
+  { key: 'agency',   name: 'Agency',   price: '€199/mes', msgs: '30.000 msgs', bots: '30 bots', color: '#fb923c', emoji: '🏢' },
 ]
 
 const PACKS = [
@@ -110,22 +110,26 @@ export default function TabBilling({ cliente, themeColor, tr }: Props) {
       <div style={S.card}>
         <div style={S.secLabel}>Cambiar plan</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          {PLANS.map(plan => {
+          {PLANS.map((plan, idx) => {
+            const currentIdx = PLANS.findIndex(p => p.key === cliente.plan)
             const isCurrent = plan.key === cliente.plan
+            const isUpgrade = idx > currentIdx
             return (
               <div key={plan.key}
-                style={{ border: `2px solid ${isCurrent ? plan.color : '#e2e8f0'}`, borderRadius: 12, padding: '14px 12px', background: isCurrent ? plan.color + '08' : 'white', textAlign: 'center' }}>
+                style={{ border: `2px solid ${isCurrent ? plan.color : isUpgrade ? plan.color + '40' : '#e2e8f0'}`, borderRadius: 12, padding: '14px 12px', background: isCurrent ? plan.color + '08' : 'white', textAlign: 'center', opacity: isUpgrade || isCurrent ? 1 : 0.4 }}>
                 <div style={{ fontSize: 22, marginBottom: 6 }}>{plan.emoji}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: plan.color, marginBottom: 2 }}>{plan.name}</div>
                 <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>{plan.price}</div>
                 <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 12 }}>{plan.msgs}</div>
                 {isCurrent ? (
-                  <div style={{ fontSize: 11, color: plan.color, fontWeight: 700 }}>Plan actual</div>
-                ) : (
+                  <div style={{ fontSize: 11, color: plan.color, fontWeight: 700, padding: '6px 0' }}>✓ Plan actual</div>
+                ) : isUpgrade ? (
                   <button onClick={() => goToCheckout(plan.key)} disabled={!!loading}
-                    style={{ ...S.btn(plan.color), padding: '6px 12px', fontSize: 11, width: '100%' }}>
-                    {loading === plan.key ? '...' : 'Contratar'}
+                    style={{ ...S.btn(plan.color), padding: '6px 12px', fontSize: 11, width: '100%', fontWeight: 800 }}>
+                    {loading === plan.key ? '...' : '↑ Upgrade'}
                   </button>
+                ) : (
+                  <div style={{ fontSize: 11, color: '#94a3b8', padding: '6px 0' }}>Plan inferior</div>
                 )}
               </div>
             )

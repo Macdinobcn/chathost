@@ -42,7 +42,7 @@ interface KBSource { id: string; type: string; url: string; filename: string; fi
 interface Conversation { id: string; session_id: string; started_at: string; message_count: number; language: string; confidence_score: number; first_message?: string }
 interface SpecialMsg { id: string; title: string; content: string; active: boolean; start_date: string | null; end_date: string | null; show_on_open: boolean; msg_color?: string; msg_type?: string }
 
-const TABS = ['General', 'Knowledge base', 'Chat', 'Noticias', 'Activity', 'Equipo', 'Billing', 'Widget', 'Stats', 'Playground']
+const TABS = ['General', 'Entreno', 'Chat', 'Noticias', 'Actividad', 'Equipo', 'Facturación', 'Diseño', 'Estadísticas', 'Playground']
 
 // Colores predefinidos para el panel de tema del admin
 const THEME_PRESETS = [
@@ -184,7 +184,7 @@ export default function ClienteDetallePage() {
   }
   // -------------------------------------------------------------------------
 
-  const [formGeneral, setFormGeneral] = useState({ name: '', email: '', plan: '', website_url: '', active: true })
+  const [formGeneral, setFormGeneral] = useState({ name: '', email: '', plan: '', website_url: '', active: true, widget_languages: [] as string[] })
   const [formChat, setFormChat] = useState({
     system_prompt: '', temperature: 0.7, auto_language: true,
     ai_model: 'claude-haiku-4-5-20251001',
@@ -301,13 +301,13 @@ export default function ClienteDetallePage() {
 
   useEffect(() => { if (!id || id === 'new') { setLoading(false); return }; cargar() }, [id])
   useEffect(() => { if (tab === 'Noticias') cargarSpeciales() }, [tab])
-  useEffect(() => { if (tab === 'Activity') cargarConvs() }, [tab, filtroFecha])
+  useEffect(() => { if (tab === 'Actividad') cargarConvs() }, [tab, filtroFecha])
   useEffect(() => {
-    if (tab === 'Widget' && widgetsForm.widget_weather_enabled && widgetsForm.widget_weather_lat && weatherPreview.length === 0) {
+    if (tab === 'Diseño' && widgetsForm.widget_weather_enabled && widgetsForm.widget_weather_lat && weatherPreview.length === 0) {
       fetchWeatherPreview()
     }
   }, [tab])
-  useEffect(() => { if (tab === 'Knowledge base') cargarSources() }, [tab])
+  useEffect(() => { if (tab === 'Entreno') cargarSources() }, [tab])
   useEffect(() => {
     if (tab === 'Playground') setPgMsgs([{ role: 'assistant', content: cliente?.initial_message || '¡Hola! ¿En qué puedo ayudarte?' }])
   }, [tab])
@@ -381,8 +381,8 @@ export default function ClienteDetallePage() {
   }
 
   function cambiarTab(nuevaTab: string) {
-    if (tab === 'Widget' && widgetDirty && nuevaTab !== 'Widget') {
-      if (!confirm('Tienes cambios sin guardar en Widget. ¿Salir sin guardar?')) return
+    if (tab === 'Diseño' && widgetDirty && nuevaTab !== 'Diseño') {
+      if (!confirm('Tienes cambios sin guardar en Diseño. ¿Salir sin guardar?')) return
     }
     setTab(nuevaTab)
   }
@@ -427,7 +427,7 @@ export default function ClienteDetallePage() {
       if (!c) { setLoading(false); return }
       setCliente(c)
       setLang(c.panel_language || 'es')
-      setFormGeneral({ name: c.name, email: c.email || '', plan: c.plan, website_url: c.website_url, active: c.active })
+      setFormGeneral({ name: c.name, email: c.email || '', plan: c.plan, website_url: c.website_url, active: c.active, widget_languages: c.widget_languages || [] })
       setFormChat({
         system_prompt: c.system_prompt || '',
         temperature: c.temperature ?? 0.7,
@@ -768,7 +768,7 @@ export default function ClienteDetallePage() {
   }
 
   async function eliminarCliente() {
-    if (!confirm(`¿Eliminar a ${cliente?.name}?`)) return
+    if (!confirm(`¿Eliminar el chatbot "${cliente?.name}"? Esta acción no se puede deshacer.`)) return
     await fetch(`/api/clients/${id}`, { method: 'DELETE' })
     router.push('/admin')
   }
@@ -947,7 +947,7 @@ export default function ClienteDetallePage() {
             }}
           >
             {t}
-            {t === 'Widget' && widgetDirty && (
+            {t === 'Diseño' && widgetDirty && (
               <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', marginLeft: 5, verticalAlign: 'middle', marginBottom: 1 }} />
             )}
           </button>
@@ -977,7 +977,7 @@ export default function ClienteDetallePage() {
         )}
 
         {/* --- KNOWLEDGE BASE -------------------------------------------- */}
-        {tab === 'Knowledge base' && (
+        {tab === 'Entreno' && (
           <TabKnowledgeBase
             cliente={cliente} kb={kb} kbSources={kbSources}
             textoKB={textoKB} setTextoKB={setTextoKB}
@@ -1304,7 +1304,7 @@ export default function ClienteDetallePage() {
         )}
 
         {/* --- ACTIVITY -------------------------------------------------- */}
-        {tab === 'Activity' && (
+        {tab === 'Actividad' && (
           <TabActivity
             cliente={cliente} widgetForm={widgetForm}
             conversations={conversations} convSel={convSel} msgsConv={msgsConv}
@@ -1322,11 +1322,11 @@ export default function ClienteDetallePage() {
           <TabTeam cliente={cliente} themeColor={themeColor} tr={tr} />
         )}
 
-        {tab === 'Billing' && (
+        {tab === 'Facturación' && (
           <TabBilling cliente={cliente} themeColor={themeColor} tr={tr} />
         )}
 
-        {tab === 'Widget' && (
+        {tab === 'Diseño' && (
           <div style={S.g2}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Logo e icono con cropper */}
@@ -1891,7 +1891,7 @@ export default function ClienteDetallePage() {
 
 
         {/* --- STATS ----------------------------------------------------- */}
-        {tab === 'Stats' && (
+        {tab === 'Estadísticas' && (
           <>
             <div style={S.statRow(4)}>
               {[

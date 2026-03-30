@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AdminTopbar from '@/components/AdminTopbar'
+import TabIncidencias from './tabs/TabIncidencias'
+import TabSentimiento from './tabs/TabSentimiento'
+import TabMarketing from './tabs/TabMarketing'
 
 interface ClienteResumen {
   id: string; name: string; website_url: string; plan: string; active: boolean
@@ -31,6 +34,13 @@ const PLAN_STYLE: Record<string, { bg: string; color: string }> = {
   pro: { bg: '#eff6ff', color: '#2563eb' }, business: { bg: '#f5f3ff', color: '#7c3aed' },
   agency: { bg: '#fff7ed', color: '#ea580c' }, trial: { bg: '#fefce8', color: '#ca8a04' },
 }
+
+const ADMIN_TABS = [
+  { key: 'clientes', label: '👥 Clientes' },
+  { key: 'incidencias', label: '🚨 Incidencias' },
+  { key: 'sentimiento', label: '💬 Sentimiento' },
+  { key: 'marketing', label: '📣 Marketing' },
+]
 
 function ClientRow({ c, mes }: { c: ClienteResumen; mes: string }) {
   const kb = c.knowledge_bases?.[0]
@@ -75,7 +85,7 @@ function ClientTable({ title, clients, mes, accent }: { title: string; clients: 
         <span style={{ fontSize: 11, color: '#98a2b3', background: '#f9fafb', border: '1px solid #eaecf0', borderRadius: 20, padding: '1px 8px' }}>{clients.length}</span>
       </div>
       <table style={s.table}>
-        <thead><tr>{['Cliente', 'Plan', 'Knowledge base', 'Mensajes mes', 'Coste mes', 'Estado', ''].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
+        <thead><tr>{['Cliente', 'Plan', 'Entreno', 'Mensajes mes', 'Coste mes', 'Estado', ''].map(h => <th key={h} style={s.th}>{h}</th>)}</tr></thead>
         <tbody>{clients.map(c => <ClientRow key={c.id} c={c} mes={mes} />)}</tbody>
       </table>
     </div>
@@ -86,6 +96,8 @@ export default function AdminPage() {
   const [clientes, setClientes] = useState<ClienteResumen[]>([])
   const [cargando, setCargando] = useState(true)
   const [actualizado, setActualizado] = useState('')
+  const [activeTab, setActiveTab] = useState('clientes')
+  const [setupLoading, setSetupLoading] = useState(false)
 
   useEffect(() => { cargar() }, [])
 
@@ -96,6 +108,15 @@ export default function AdminPage() {
     setClientes(data.clients || [])
     setCargando(false)
     setActualizado(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }))
+  }
+
+  async function setupChathostBot() {
+    setSetupLoading(true)
+    const res = await fetch('/api/admin/setup-chathost-bot', { method: 'POST' })
+    const data = await res.json()
+    setSetupLoading(false)
+    if (data.error) alert('Error: ' + data.error)
+    else { alert(`Bot ChatHost.ai ${data.action === 'created' ? 'creado' : 'actualizado'} — ${data.wordCount} palabras en KB`); cargar() }
   }
 
   const mes = new Date().toISOString().slice(0, 7)
@@ -115,42 +136,83 @@ export default function AdminPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {actualizado && <span style={{ fontSize: 11, color: '#64748b' }}>Actualizado: {actualizado}</span>}
             <button onClick={cargar} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #334155', background: '#0f172a', color: '#94a3b8', cursor: 'pointer' }}>↺ Refresh</button>
+            <button onClick={setupChathostBot} disabled={setupLoading} style={{ fontSize: 11, padding: '5px 12px', borderRadius: 6, border: '1px solid #6366f1', background: '#eff6ff', color: '#6366f1', cursor: 'pointer', fontWeight: 600 }}>
+              {setupLoading ? '...' : '🤖 Setup bot ChatHost'}
+            </button>
             <Link href="/admin/clients/new" style={{ background: '#2563eb', color: 'white', padding: '7px 16px', borderRadius: 8, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>+ Nuevo cliente</Link>
           </div>
         }
       />
 
-      <div style={s.body}>
-        <div style={s.statsGrid}>
-          {[
-            { label: 'Clientes activos', val: activos, color: '#16a34a', sub: `de ${externos.length} totales` },
-            { label: 'MRR estimado', val: `€${mrr}`, color: '#4f46e5', sub: 'ingresos este mes' },
-            { label: 'Coste API', val: `€${totalCoste.toFixed(3)}`, color: '#f59e0b', sub: 'Claude Haiku' },
-            { label: 'Mensajes mes', val: totalMensajes.toLocaleString(), color: '#7c3aed', sub: 'todos los clientes' },
-            { label: 'Margen', val: `${margen}%`, color: margen >= 75 ? '#16a34a' : '#ef4444', sub: mrr > 0 ? 'sobre MRR' : 'sin ingresos aún' },
-          ].map(st => (
-            <div key={st.label} style={s.statBox}>
-              <div style={s.statLabel}>{st.label}</div>
-              <div style={{ ...s.statVal, color: st.color }}>{st.val}</div>
-              <div style={s.statSub}>{st.sub}</div>
-            </div>
+      {/* Tabs de navegación admin */}
+      <div style={{ borderBottom: '1px solid #eaecf0', background: 'white', paddingLeft: 28 }}>
+        <div style={{ display: 'flex', gap: 0, maxWidth: 1200, margin: '0 auto' }}>
+          {ADMIN_TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              style={{
+                padding: '12px 20px', border: 'none', background: 'none',
+                fontSize: 13, fontWeight: activeTab === t.key ? 700 : 400,
+                color: activeTab === t.key ? '#2563eb' : '#64748b',
+                borderBottom: `2px solid ${activeTab === t.key ? '#2563eb' : 'transparent'}`,
+                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                marginBottom: -1,
+              }}
+            >
+              {t.label}
+            </button>
           ))}
         </div>
+      </div>
 
-        {cargando ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#98a2b3', fontSize: 13 }}>Cargando...</div>
-        ) : (
+      <div style={s.body}>
+
+        {/* ── CLIENTES ─────────────────────────────────────────────── */}
+        {activeTab === 'clientes' && (
           <>
-            <ClientTable title="🔮 Mis bots" clients={internos} mes={mes} accent="#818cf8" />
-            <ClientTable title="👥 Clientes" clients={externos} mes={mes} accent="#4f46e5" />
-            {clientes.length === 0 && (
-              <div style={{ ...s.card, padding: 56, textAlign: 'center' }}>
-                <div style={{ fontSize: 13, color: '#98a2b3', marginBottom: 12 }}>No hay clientes todavía</div>
-                <Link href="/admin/clients/new" style={{ background: '#4f46e5', color: 'white', padding: '8px 18px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Crear el primero</Link>
-              </div>
+            <div style={s.statsGrid}>
+              {[
+                { label: 'Clientes activos', val: activos, color: '#16a34a', sub: `de ${externos.length} totales` },
+                { label: 'MRR estimado', val: `€${mrr}`, color: '#4f46e5', sub: 'ingresos este mes' },
+                { label: 'Coste API', val: `€${totalCoste.toFixed(3)}`, color: '#f59e0b', sub: 'Claude Haiku' },
+                { label: 'Mensajes mes', val: totalMensajes.toLocaleString(), color: '#7c3aed', sub: 'todos los clientes' },
+                { label: 'Margen', val: `${margen}%`, color: margen >= 75 ? '#16a34a' : '#ef4444', sub: mrr > 0 ? 'sobre MRR' : 'sin ingresos aún' },
+              ].map(st => (
+                <div key={st.label} style={s.statBox}>
+                  <div style={s.statLabel}>{st.label}</div>
+                  <div style={{ ...s.statVal, color: st.color }}>{st.val}</div>
+                  <div style={s.statSub}>{st.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {cargando ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#98a2b3', fontSize: 13 }}>Cargando...</div>
+            ) : (
+              <>
+                <ClientTable title="🔮 Mis bots" clients={internos} mes={mes} accent="#818cf8" />
+                <ClientTable title="👥 Clientes" clients={externos} mes={mes} accent="#4f46e5" />
+                {clientes.length === 0 && (
+                  <div style={{ ...s.card, padding: 56, textAlign: 'center' }}>
+                    <div style={{ fontSize: 13, color: '#98a2b3', marginBottom: 12 }}>No hay clientes todavía</div>
+                    <Link href="/admin/clients/new" style={{ background: '#4f46e5', color: 'white', padding: '8px 18px', borderRadius: 8, textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>Crear el primero</Link>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
+
+        {/* ── INCIDENCIAS ──────────────────────────────────────────── */}
+        {activeTab === 'incidencias' && <TabIncidencias />}
+
+        {/* ── SENTIMIENTO ──────────────────────────────────────────── */}
+        {activeTab === 'sentimiento' && <TabSentimiento />}
+
+        {/* ── MARKETING ────────────────────────────────────────────── */}
+        {activeTab === 'marketing' && <TabMarketing />}
+
         <div style={{ marginTop: 24, textAlign: 'center', fontSize: 11, color: '#d0d5dd' }}>Panel privado ChatHost.ai</div>
       </div>
     </div>

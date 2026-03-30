@@ -8,6 +8,10 @@ import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+const PLAN_BOTS: Record<string, number> = {
+  trial: 1, basic: 1, starter: 1, pro: 3, business: 10, agency: 30,
+}
+
 interface BotEntry {
   client_id: string
   clients: {
@@ -31,6 +35,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [bots, setBots] = useState<BotEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [maxBots, setMaxBots] = useState(1)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,13 +56,10 @@ export default function DashboardPage() {
 
       if (!data || data.length === 0) { router.push('/auth/login'); return }
 
-      // 1 bot → redirige directo, sin mostrar el selector
-      if (data.length === 1) {
-        router.push(`/admin/clients/${data[0].client_id}`)
-        return
-      }
-
-      setBots(data as unknown as BotEntry[])
+      const entries = data as unknown as BotEntry[]
+      const plan = (entries[0]?.clients as any)?.plan || 'trial'
+      setMaxBots(PLAN_BOTS[plan] ?? 1)
+      setBots(entries)
       setLoading(false)
     }
     load()
@@ -92,16 +94,25 @@ export default function DashboardPage() {
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '56px 24px' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: 40 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8', fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 20, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            ✦ Mis chatbots
+        <div style={{ marginBottom: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8', fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 20, marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              ✦ Mis chatbots
+            </div>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 34, fontWeight: 700, color: 'white', marginBottom: 8, letterSpacing: '-0.02em' }}>
+              ¿Qué chatbot quieres gestionar?
+            </h1>
+            <p style={{ fontSize: 14, color: '#475569' }}>
+              <strong style={{ color: '#94a3b8' }}>{bots.length}</strong> de <strong style={{ color: '#94a3b8' }}>{maxBots}</strong> chatbots usados en tu plan.
+            </p>
           </div>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 34, fontWeight: 700, color: 'white', marginBottom: 8, letterSpacing: '-0.02em' }}>
-            ¿Qué chatbot quieres gestionar?
-          </h1>
-          <p style={{ fontSize: 14, color: '#475569' }}>
-            Tienes <strong style={{ color: '#94a3b8' }}>{bots.length} chatbots</strong> en tu cuenta. Haz click en uno para acceder a su panel.
-          </p>
+          {bots.length < maxBots && (
+            <Link href="/dashboard/new" style={{ textDecoration: 'none' }}>
+              <button style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg, #6366f1, #4f46e5)', border: 'none', borderRadius: 12, padding: '12px 22px', fontSize: 14, fontWeight: 700, color: 'white', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Nuevo chatbot
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* Grid de bots */}
@@ -158,14 +169,28 @@ export default function DashboardPage() {
             )
           })}
 
-          {/* Tarjeta "Añadir bot" */}
-          <div style={{ background: 'rgba(99,102,241,0.03)', border: '1px dashed rgba(99,102,241,0.2)', borderRadius: 16, padding: '22px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 160, textAlign: 'center' }}>
-            <div style={{ fontSize: 24, color: '#1e293b', marginBottom: 8 }}>+</div>
-            <div style={{ fontSize: 12, color: '#334155', lineHeight: 1.6 }}>
-              ¿Necesitas otro chatbot?<br />
-              <a href="mailto:hola@chathost.ai" style={{ color: '#6366f1', textDecoration: 'none' }}>Contacta con nosotros</a>
+          {/* Tarjeta añadir / límite */}
+          {bots.length < maxBots ? (
+            <Link href="/dashboard/new" style={{ textDecoration: 'none' }}>
+              <div
+                style={{ background: 'rgba(99,102,241,0.03)', border: '1px dashed rgba(99,102,241,0.3)', borderRadius: 16, padding: '22px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 160, textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(99,102,241,0.08)' }}
+                onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(99,102,241,0.03)' }}
+              >
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, marginBottom: 10, color: '#818cf8' }}>+</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#818cf8', marginBottom: 4 }}>Nuevo chatbot</div>
+                <div style={{ fontSize: 11, color: '#334155' }}>Te quedan {maxBots - bots.length} slot{maxBots - bots.length > 1 ? 's' : ''}</div>
+              </div>
+            </Link>
+          ) : (
+            <div style={{ background: 'rgba(99,102,241,0.03)', border: '1px dashed rgba(99,102,241,0.1)', borderRadius: 16, padding: '22px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 160, textAlign: 'center' }}>
+              <div style={{ fontSize: 20, marginBottom: 8 }}>🔒</div>
+              <div style={{ fontSize: 12, color: '#334155', lineHeight: 1.6 }}>
+                Has alcanzado el límite de tu plan.<br />
+                <a href="mailto:hola@chathost.ai" style={{ color: '#6366f1', textDecoration: 'none' }}>Ampliar plan</a>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

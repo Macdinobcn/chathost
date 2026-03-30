@@ -910,6 +910,15 @@ export default function LandingClient() {
           </div>
         </div>
       </footer>
+
+      {/* Bot de ChatHost.ai — widget permanente en la landing */}
+      <script
+        src="/widget.js"
+        data-id="chathost-ai-official"
+        data-color="#6366f1"
+        data-name="Asistente ChatHost"
+        async
+      />
     </>
   )
 }

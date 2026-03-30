@@ -37,16 +37,35 @@ export async function responderChat(params: {
   pregunta: string
   temperatura?: number
   autoLanguage?: boolean
+  allowedLanguages?: string[]
   mensajesEspeciales?: string[]
 }): Promise<{ respuesta: string; tokensUsados: number; costeEur: number }> {
 
   const temperatura = Math.min(1, Math.max(0, (params.temperatura ?? 0.7)))
 
+  const LANG_NAMES: Record<string, string> = {
+    es: 'Español', en: 'English', fr: 'Français', de: 'Deutsch',
+    it: 'Italiano', pt: 'Português', nl: 'Nederlands', ca: 'Català',
+    zh: '中文', ja: '日本語', ru: 'Русский', ar: 'العربية',
+  }
+
+  const hasLangRestriction = params.allowedLanguages && params.allowedLanguages.length > 0
+  const allowedNames = hasLangRestriction
+    ? params.allowedLanguages!.map(c => LANG_NAMES[c] || c).join(', ')
+    : ''
+  const defaultLang = hasLangRestriction ? (LANG_NAMES[params.allowedLanguages![0]] || params.allowedLanguages![0]) : 'Español'
+
+  const langInstruction = hasLangRestriction
+    ? `IMPORTANTE: Solo puedes responder en estos idiomas: ${allowedNames}. Si el usuario escribe en otro idioma, respóndele en ${defaultLang} e indícale amablemente en qué idiomas está disponible el servicio.`
+    : params.autoLanguage !== false
+      ? 'IMPORTANTE: Responde SIEMPRE en el mismo idioma que usa el usuario. Si escribe en inglés, responde en inglés. Si escribe en francés, responde en francés. Nunca cambies de idioma.'
+      : 'Responde siempre en español.'
+
   // System prompt base
   let systemPrompt = `Eres el asistente virtual de ${params.nombreCliente}.
 Tu única fuente de información es la knowledge base que te proporcionamos.
 Si no sabes la respuesta, dilo honestamente y ofrece el contacto del negocio.
-${params.autoLanguage !== false ? 'IMPORTANTE: Responde SIEMPRE en el mismo idioma que usa el usuario. Si escribe en inglés, responde en inglés. Si escribe en francés, responde en francés. Nunca cambies de idioma.' : 'Responde siempre en español.'}
+${langInstruction}
 Sé amable, conciso y útil.
 Cuando menciones precios o servicios, incluye el link relevante si lo tienes.
 No inventes información que no esté en la knowledge base.`

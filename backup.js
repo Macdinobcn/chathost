@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// backup.js — Backup completo chat-arandai
+// backup.js — Backup completo ChatHost.ai
 // Copia TODO el proyecto excepto node_modules y .next (son regenerables)
 // Parar: Ctrl+C
 
@@ -10,7 +10,7 @@ const crypto = require('crypto')
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const PROJECT_ROOT = __dirname
+const PROJECT_ROOT = 'C:\\Users\\anera\\Desktop\\ChatHost.ai'
 
 const BACKUP_DIRS = [
   'D:\\chat-arandai\\zBackup',
@@ -79,7 +79,7 @@ function ensureDir(dir) {
 function cleanOldBackups(dir) {
   try {
     const files = fs.readdirSync(dir)
-      .filter(f => f.startsWith('chat_arandai_backup_') && f.endsWith('.zip'))
+      .filter(f => f.startsWith('chathost_ai_backup_') && f.endsWith('.zip'))
       .sort()
     if (files.length > MAX_BACKUPS) {
       files.slice(0, files.length - MAX_BACKUPS).forEach(f => {
@@ -91,10 +91,10 @@ function cleanOldBackups(dir) {
 }
 
 function backupToDir(destDir, timestamp) {
-  const zipPath = path.join(destDir, `chat_arandai_backup_${timestamp}.zip`)
+  const zipPath = path.join(destDir, `chathost_ai_backup_${timestamp}.zip`)
 
   try {
-    const tmpDir = path.join(require('os').tmpdir(), `chat_arandai_tmp_${timestamp}`)
+    const tmpDir = path.join(require('os').tmpdir(), `chathost_ai_tmp_${timestamp}`)
     const projName = path.basename(PROJECT_ROOT)
     const tmpProj  = path.join(tmpDir, projName)
 
@@ -113,7 +113,7 @@ function backupToDir(destDir, timestamp) {
     execSync(`rmdir /s /q "${tmpDir}"`, { stdio: 'pipe' })
 
     const sizeMB = (fs.statSync(zipPath).size / 1024 / 1024).toFixed(1)
-    log(`✅ ${destDir} → chat_arandai_backup_${timestamp}.zip (${sizeMB} MB)`)
+    log(`✅ ${destDir} → chathost_ai_backup_${timestamp}.zip (${sizeMB} MB)`)
     cleanOldBackups(destDir)
     return true
 
@@ -160,7 +160,7 @@ function check() {
 
 // ── Arranque ──────────────────────────────────────────────────────────────────
 
-log('🚀 Backup chat-arandai arrancado')
+log('🚀 Backup ChatHost.ai arrancado')
 log(`⏱️  Comprueba cambios cada 20 minutos`)
 log(`📁 Destino 1: ${BACKUP_DIRS[0]}`)
 log(`📁 Destino 2: ${BACKUP_DIRS[1]}`)
